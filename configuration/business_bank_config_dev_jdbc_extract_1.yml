@@ -1,0 +1,32 @@
+version: 1
+source_name: "business_bank"
+sdlc_stage: "dev"
+extract:
+  jdbc:
+    engine: postgres
+    host: 169.1.46.235
+    port: 5432
+    vCPU: 4
+    memory:
+      unit: GB
+      amount: 4
+  tables:
+    postgres.public.accounts:
+      watermark_data_type: INTEGER
+      lower_bound: 1
+      upper_bound: 100
+      partition_column: account_id
+      num_partitions: 4
+    postgres.public.customer_info:
+      watermark_data_type: INTEGER
+      lower_bound: 1
+      upper_bound: 100
+      partition_column: customer_id
+      num_partitions: 4
+    postgres.public.transactions:
+      watermark_data_type: INTEGER
+      lower_bound: 1
+      upper_bound: 100
+      partition_column: transaction_id
+      num_partitions: 4
+

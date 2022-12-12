@@ -1,4 +1,4 @@
-# 2.1 Extract
+# 2.1 JDBC Extract
 
 Connecting to the data sources and retrieving the pertinent data are the responsibilities of this component.
 The extraction module may retrieve the data and extract it in the required format using a number of methods, including

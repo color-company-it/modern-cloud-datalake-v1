@@ -311,3 +311,5 @@ terraform.rc
 
 # End of https://www.toptal.com/developers/gitignore/api/terraform,python,spark,scala
 /infrastructure/_backend.tf
+/infrastructure/.terraform/
+/infrastructure/.terraform.lock.hcl

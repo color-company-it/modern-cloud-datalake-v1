@@ -7,12 +7,11 @@
     2. [Software Development Life Cycle](1_Introduction/2_SoftwareDevelopmentLifeCycle.md)
     3. [Overview Of The DataLake](1_Introduction/3_OverviewOfTheDataLake.md)
 2. Extract, Transform, and Load Pipelines
-    1. JDBC Sources
-        1. [JDBC Extract Pipeline](2_ExtractTransformLoadPipelines/1_JDBCExtract.md)
-        2. [JDBC Transform Pipeline](2_ExtractTransformLoadPipelines/2_JDBCTransform.md)
-        3. [JDBC Load Pipeline](2_ExtractTransformLoadPipelines/3_JDBCLoad.md)
+    1. [JDBC Extract Pipeline](2_ExtractTransformLoadPipelines/1_JDBCExtract.md)
+    2. [JDBC Transform Pipeline](2_ExtractTransformLoadPipelines/2_JDBCTransform.md)
+    3. [JDBC Load Pipeline](2_ExtractTransformLoadPipelines/3_JDBCLoad.md)
 3. JDBC Sources
-   1. [Optimising JDBC ETL Pipelines](3_JDBCSources/1_OptimisingJDBCETLPipelines.md)
+    1. [Optimising JDBC ETL Pipelines](3_JDBCSources/1_OptimisingJDBCETLPipelines.md)
 4. Environments And Layers
     1. [Configuration](4_EnvironmentsAndLayers/1_Configuration.md)
     2. [Infrastructure](4_EnvironmentsAndLayers/2_Infrastructure.md)

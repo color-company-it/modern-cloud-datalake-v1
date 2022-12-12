@@ -15,11 +15,12 @@
     1. Postgres
     2. MySQL
 4. Environments And Layers
-    1. Configuration
-    2. Infrastructure
-    3. Orchestration
-    4. Codebase
-    5. Testing
+    1. [Configuration](4_EnvironmentsAndLayers/1_Configuration.md)
+    2. [Infrastructure](4_EnvironmentsAndLayers/2_Infrastructure.md)
+    3. [Orchestration](4_EnvironmentsAndLayers/3_Orchestration.md)
+    4. [Codebase](4_EnvironmentsAndLayers/4_Codebase.md)
+    5. [Testing](4_EnvironmentsAndLayers/5_Testing.md)
+    6. [Monitoring](4_EnvironmentsAndLayers/6_Monitoring.md)
 5. Testing And Maintenance
     1. Test Cases and Methodologies
     2. Troubleshooting

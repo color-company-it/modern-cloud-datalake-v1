@@ -13,6 +13,20 @@ module "codebase-archive" {
   source_dir  = "${path.root}/../codebase/"
 }
 
+# codebase lambda layer
+locals {
+  codebase-lambda-layer-local-dir = "${path.root}/../codebase_layer/"
+}
+
+module "codebase-layer-archive" {
+  source = "./modules/utils/archive_directory"
+
+  bucket_key  = "codebase/codebase_layer.zip"
+  bucket_name = aws_s3_bucket.codebase-bucket.bucket
+  output_path = "${path.root}/../codebase_layer.zip"
+  source_dir  = local.codebase-lambda-layer-local-dir
+}
+
 # configuration     ----------------------------------------------------------------------------------------------------
 resource "aws_s3_bucket" "configuration-bucket" {
   bucket = "${var.business-name}-configuration"

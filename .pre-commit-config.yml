@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: package-codebase-lambda-layer
+        name: package-codebase-lambda-layer
+        entry: python scripts/cicd/lambda_layer.py -i codebase/ -o codebase_layer/ -n codebase
+        language: system
+        pass_filenames: false

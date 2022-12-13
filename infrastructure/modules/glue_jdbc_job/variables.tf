@@ -34,12 +34,12 @@ variable "connections" {
 }
 
 variable "job-language" {
-  type = string
+  type        = string
   description = "The programming language set up for the Glue Job, default to Python"
-  default = "python"
+  default     = "python"
 }
 
 variable "language-modules" {
-  type = string
+  type        = string
   description = "A command separated list of language modules or S3 URI archived files"
 }

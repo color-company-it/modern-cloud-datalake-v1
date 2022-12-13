@@ -27,7 +27,7 @@ locals {
   */
   configuration-files = fileset(local.repository-layers.configuration, "*.yaml")
   docker-scripts      = fileset("${local.repository-layers.scripts}/docker/", "*")
-  spark-jdbc-scripts       = fileset("${local.repository-layers.scripts}/spark/jdbc/", "*")
+  spark-jdbc-scripts  = fileset("${local.repository-layers.scripts}/spark/jdbc/", "*")
 
   /*
   sdlc-stages is a local variable that specifies the different stages of the

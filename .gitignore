@@ -313,3 +313,6 @@ terraform.rc
 /infrastructure/_backend.tf
 /infrastructure/.terraform/
 /infrastructure/.terraform.lock.hcl
+/codebase_layer/
+/codebase.zip
+/codebase_layer.zip

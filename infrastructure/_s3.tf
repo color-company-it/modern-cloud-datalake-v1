@@ -15,7 +15,7 @@ module "codebase-archive" {
 
 # codebase lambda layer
 locals {
-  codebase-lambda-layer-local-dir = "${path.root}/../codebase_layer/"
+  codebase-lambda-layer-local-dir = "${path.root}/../codebase_layer"
 }
 
 module "codebase-layer-archive" {

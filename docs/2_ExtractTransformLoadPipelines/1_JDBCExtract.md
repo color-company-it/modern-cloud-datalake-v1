@@ -12,16 +12,19 @@ specified S3 URI.
 
 To use the PySpark JDBC Extract Job, you will need to specify the following command-line arguments:
 
---extract_type: The type of extract to be performed (e.g. FULL or INCREMENTAL).
---engine: The database engine to be used (e.g. ORACLE or POSTGRES).
---db_host: The hostname of the database server.
---db_port: The port of the database server.
---db_name: The name of the database to be accessed.
---db_user: The username for connecting to the database.
---db_password: The password for the provided username.
---extract_table: The table to be extracted. This argument can be specified in the form schema.table.
---extract_s3_uri: The S3 URI to which the extracted data should be written.
---repartition_dataframe (optional): Whether or not to repartition the extracted dataframe. This argument should be set
+| Flag                                | Description                                                                         |
+|-------------------------------------|-------------------------------------------------------------------------------------|
+| --extract_type:                     | The type of extract to be performed (e.g. FULL or INCREMENTAL).                     |
+| --engine:                           | The database engine to be used (e.g. ORACLE or POSTGRES).                           |
+| --db_host:                          | The hostname of the database server.                                                |
+| --db_port:                          | The port of the database server.                                                    |
+| --db_name:                          | The name of the database to be accessed.                                            |
+| --db_user:                          | The username for connecting to the database.                                        |
+| --db_password:                      | The password for the provided username.                                             |
+| --extract_table:                    | The table to be extracted. This argument can be specified in the form schema.table. |
+| --extract_s3_uri:                   | The S3 URI to which the extracted data should be written.                           |
+| --repartition_dataframe (optional): | Whether or not to repartition the extracted dataframe. This argument should be set  |
+
 to True or False.
 
 ## Different Extraction Methods

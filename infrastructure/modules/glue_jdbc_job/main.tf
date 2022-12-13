@@ -19,6 +19,8 @@ resource "aws_glue_job" "glue-jdbc-job" {
     # Args for Hudi 0.12.0
     "--datalake-formats" : "hudi"
     "--conf" : "spark.serializer=org.apache.spark.serializer.KryoSerializer --conf spark.sql.hive.convertMetastoreParquet=false"
+    "--job-language"              = var.job-language
+    "--additional-python-modules" = var.language-modules
   }
 
   connections = var.connections

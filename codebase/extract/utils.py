@@ -22,3 +22,20 @@ def repartition_dataframe(
     default_parallelism = spark.sparkContext.defaultParallelism
     num_partitions = int(data_frame.count() / default_parallelism)
     return data_frame.repartition(num_partitions), num_partitions
+
+
+def get_hwm_and_lwm_values(data_frame: DataFrame, field: str) -> tuple:
+    """
+    Get the hwm_value and lwm_value of a field in a PySpark data frame.
+
+    :param data_frame: PySpark data frame
+    :param field: Name of the field
+    :returns: A tuple containing the hwm_value and lwm_value of the field in the data frame
+    """
+
+    # Calculate the hwm_value and lwm_value using the max() and min() functions
+    hwm_value = data_frame.select(max(field)).first()[0]
+    lwm_value = data_frame.select(min(field)).first()[0]
+
+    # Return the hwm_value and lwm_value
+    return hwm_value, lwm_value

@@ -34,29 +34,9 @@ Here is an illustration of a better SQL query that pulls only the most recent in
 database using a pushdown query and a high watermark:
 
 ```sql
-SELECT 
-  * 
-FROM 
-  (
-    SELECT 
-      * 
-    FROM 
-      table 
-    WHERE 
-      id > (
-        SELECT 
-          MAX(id) 
-        FROM 
-          processed_records
-      )
-  ) AS new_rows 
-WHERE 
-  new_rows.timestamp > (
-    SELECT 
-      MAX(timestamp) 
-    FROM 
-      new_rows
-  )
+WHERE <hwm_col_name> > <lwm_value> and <hwm_col_name> <= <hwm_value>
+
+(SELECT * FROM <db/table> <sql_where_condition>) <table>_alias
 ```
 
 In this query, any rows that have already been processed in prior iterations of the query are filtered away by the inner
@@ -91,4 +71,14 @@ The result is a sql query that would look like this:
 SELECT * FROM my_table WHERE name = 'DirkSCGM' AND id > 1000
 ```
 
- that the issue is properly prioritized and addressed in a timely manner.
+## High/Low Watermarks vs Upper/Lower Bounds
+
+The upper bound and lower bound in a PySpark JDBC query are not necessarily the same as the hwm value and lwm value.
+
+The upper bound and lower bound in a PySpark JDBC query refer to the maximum and minimum values of the specified field
+that will be used in the WHERE clause of the query. This can be used to limit the amount of data that is queried from
+the database, which can improve the performance of the query.
+
+On the other hand, the hwm value and lwm value refer to the maximum and minimum values of a field in a PySpark data
+frame. These values can be calculated using the max() and min() functions. The hwm value and lwm value do not
+necessarily have anything to do with the upper bound and lower bound in a PySpark JDBC query.

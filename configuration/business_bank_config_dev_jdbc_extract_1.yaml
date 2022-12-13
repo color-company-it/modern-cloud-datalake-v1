@@ -1,6 +1,5 @@
 version: 1
 source_name: "business_bank"
-sdlc_stage: "dev"
 extract:
   job_type: glue # emr, ecs
   jdbc:

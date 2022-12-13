@@ -55,9 +55,9 @@ resource "aws_s3_bucket_object" "scripts-docker-uploads" {
   source   = "${local.repository-layers.scripts}docker/${each.value}"
 }
 
-resource "aws_s3_bucket_object" "scripts-spark-uploads" {
-  for_each = local.spark-scripts
+resource "aws_s3_bucket_object" "scripts-spark-jdbc-uploads" {
+  for_each = local.spark-jdbc-scripts
   bucket   = aws_s3_bucket.scripts-bucket.bucket
-  key      = "spark/${each.value}"
-  source   = "${local.repository-layers.scripts}spark/${each.value}"
+  key      = "spark/jdbc/${each.value}"
+  source   = "${local.repository-layers.scripts}spark/jdbc/${each.value}"
 }

@@ -1,6 +1,8 @@
 data "aws_caller_identity" "current" {}
 
 locals {
+  python-modules = "requests==2.28.1,${module.codebase-archive.object_uri}"
+
   /*
   This Terraform code defines a map named repository-layers that contains
   the file paths of four directories: codebase, configuration, orchestration,
@@ -16,7 +18,6 @@ locals {
     scripts       = "${path.root}/../scripts/"
   }
 
-
   /*
   Defines a local named configuration_files that contains a set of all .yaml
   files in the configuration directory, which is located at the root of the
@@ -26,7 +27,7 @@ locals {
   */
   configuration-files = fileset(local.repository-layers.configuration, "*.yaml")
   docker-scripts      = fileset("${local.repository-layers.scripts}/docker/", "*")
-  spark-scripts       = fileset("${local.repository-layers.scripts}/spark/", "*")
+  spark-jdbc-scripts       = fileset("${local.repository-layers.scripts}/spark/jdbc/", "*")
 
   /*
   sdlc-stages is a local variable that specifies the different stages of the

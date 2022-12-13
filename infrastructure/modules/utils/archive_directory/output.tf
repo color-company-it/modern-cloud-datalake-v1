@@ -3,7 +3,7 @@ output "archive_path" {
   description = "The path to the zip archive that was created"
 }
 
-output "bucket_object_key" {
-  value       = aws_s3_bucket_object.archive_directory.key
-  description = "The key of the object that was created in the S3 bucket"
+output "object_uri" {
+  value       = "s3://${aws_s3_bucket_object.archive_directory.bucket}/${aws_s3_bucket_object.archive_directory.key}"
+  description = "The uri of the object that was created in the S3 bucket"
 }

@@ -32,3 +32,14 @@ variable "connections" {
   type        = list(string)
   description = "This variable specifies the connections that the Glue job will use. A connection is a named resource that specifies the details of a connection to a data store, such as an Amazon RDS database"
 }
+
+variable "job-language" {
+  type = string
+  description = "The programming language set up for the Glue Job, default to Python"
+  default = "python"
+}
+
+variable "language-modules" {
+  type = string
+  description = "A command separated list of language modules or S3 URI archived files"
+}

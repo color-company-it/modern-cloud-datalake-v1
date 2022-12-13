@@ -4,6 +4,26 @@ Connecting to the data sources and retrieving the pertinent data are the respons
 The extraction module may retrieve the data and extract it in the required format using a number of methods, including
 SQL queries, API calls, or custom scripts.
 
+The PySpark JDBC Extract Job is a script that extracts data from a JDBC source by connecting to a JDBC URL and reading
+data from a table using a SQL pushdown query. The job can be parameterized with options that allow customization of the
+extract process, such as specifying the type of extract, the database engine, the extract table, and the database host
+and port. Additionally, the job can be configured to repartition the extracted dataframe and write the results to a
+specified S3 URI.
+
+To use the PySpark JDBC Extract Job, you will need to specify the following command-line arguments:
+
+--extract_type: The type of extract to be performed (e.g. FULL or INCREMENTAL).
+--engine: The database engine to be used (e.g. ORACLE or POSTGRES).
+--db_host: The hostname of the database server.
+--db_port: The port of the database server.
+--db_name: The name of the database to be accessed.
+--db_user: The username for connecting to the database.
+--db_password: The password for the provided username.
+--extract_table: The table to be extracted. This argument can be specified in the form schema.table.
+--extract_s3_uri: The S3 URI to which the extracted data should be written.
+--repartition_dataframe (optional): Whether or not to repartition the extracted dataframe. This argument should be set
+to True or False.
+
 ## Different Extraction Methods
 
 Data in a relational database can be extracted in several different ways, including a full extract, partial extract, or
@@ -21,14 +41,6 @@ A partial extract involves extracting only a subset of the data from a relationa
 only need to analyze a specific portion of the data, or when you want to reduce the amount of time and resources
 required to extract the data. To extract a partial dataset, you can use a WHERE clause in your SQL query to specify the
 conditions that the data must meet in order to be included in the extract.
-
-#### Bounded Extract: BE
-
-An extract using upperbound and lowerbound values involves extracting data from a relational database that falls within
-a specific range of values. This can be useful when you want to analyze data that falls within a specific time period,
-or when you want to extract data based on a particular value or characteristic. To extract data using upper and lower
-bounds, you can use the BETWEEN operator in your SQL query to specify the range of values that you want to include in
-the extract.
 
 ### Expressing these Extract Types in SQL
 

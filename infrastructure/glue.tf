@@ -10,7 +10,7 @@ module "jdbc-glue-job-v1" {
 
   max-concurrent-runs = 1
   script-location     = "S3://${aws_s3_bucket.scripts-bucket.bucket}/spark/jdbc/pipeline_${each.value}_${var.sdlc-stage}_jdbc_1.py"
-
-  connections = []
-  depends_on  = [module.jdbc-glue-iam-roles]
+  language-modules    = local.python-modules
+  connections         = []
+  depends_on          = [module.jdbc-glue-iam-roles]
 }

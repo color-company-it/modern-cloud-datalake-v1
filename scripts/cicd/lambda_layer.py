@@ -14,14 +14,27 @@ import argparse
 import os
 import shutil
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Parse command-line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input_dir", type=str,
-                        help="Path to the directory to be used as the source for the lambda layer")
-    parser.add_argument("-o", "--output_dir", type=str,
-                        help="Path to the directory where the lambda layer will be created")
-    parser.add_argument("-n", "--module_name", type=str, help="Name of the Python module for the lambda layer")
+    parser.add_argument(
+        "-i",
+        "--input_dir",
+        type=str,
+        help="Path to the directory to be used as the source for the lambda layer",
+    )
+    parser.add_argument(
+        "-o",
+        "--output_dir",
+        type=str,
+        help="Path to the directory where the lambda layer will be created",
+    )
+    parser.add_argument(
+        "-n",
+        "--module_name",
+        type=str,
+        help="Name of the Python module for the lambda layer",
+    )
     args, _ = parser.parse_known_args()
 
     # Create the output directory if it doesn't exist, or delete and re-create it if it does

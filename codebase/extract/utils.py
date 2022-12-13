@@ -1,4 +1,43 @@
+import time
+
 from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql.functions import lit
+
+
+def add_jdbc_extract_time_field(data_frame: DataFrame) -> DataFrame:
+    """Returns the current ISO time in seconds"""
+    return data_frame.withColumn("jdbc_extract_time", lit(int(time.time())))
+
+
+def jdbc_read(
+    spark: SparkSession,
+    jdbc_url: str,
+    sql_pushdown_query: str,
+    driver: str,
+    partition_column: str,
+    lower_bound: int,
+    upper_bound: int,
+    num_partitions: int,
+    fetchsize: int,
+) -> DataFrame:
+    """
+    Reads data from a JDBC source using the specified JDBC URL and SQL pushdown query.
+    The function can be parameterized with options to customize the JDBC read process, such
+    as specifying a fetch size and partitioning options.
+    """
+    data_frame = (
+        spark.read.format("jdbc")
+        .option("url", jdbc_url)
+        .option("driver", driver)
+        .option("dbtable", sql_pushdown_query)
+        .option("partitionColumn", partition_column)
+        .option("lowerBound", lower_bound)
+        .option("upperBound", upper_bound)
+        .option("numPartitions", num_partitions)
+    )
+    if fetchsize:
+        data_frame = data_frame.option("fetchsize", fetchsize)
+    return data_frame.load()
 
 
 def repartition_dataframe(

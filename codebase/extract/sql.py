@@ -60,5 +60,3 @@ def parse_extract_table(extract_table: str) -> dict:
         "db_schema": parts[1] if len(parts) >= 2 else None,
         "db_table": parts[2] if len(parts) >= 3 else None,
     }
-
-

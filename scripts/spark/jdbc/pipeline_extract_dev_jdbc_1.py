@@ -14,41 +14,17 @@ from pyspark.sql import SparkSession, DataFrame
 
 from codebase import get_logger
 from codebase.aws.secrets import get_secrets_dict
-from codebase.extract import get_jdbc_url, JDBC_DRIVERS
+from codebase.extract import get_jdbc_url
 from codebase.extract.sql import (
     generate_sql_pushdown_query,
     generate_sql_where_condition,
     parse_extract_table,
 )
-from codebase.extract.utils import repartition_dataframe
+from codebase.extract.utils import repartition_dataframe, add_jdbc_extract_time_field, jdbc_read
 
 SC = SparkContext()
 SPARK = SparkSession.builder.appName("ExtractJDBCSource").getOrCreate()
 LOGGER = get_logger()
-
-
-def jdbc_read(jdbc_url: str, sql_pushdown_query: str, driver: str,
-              partition_column: str, lower_bound: int, upper_bound: int,
-              num_partitions: int, fetchsize: int) -> DataFrame:
-    """
-    Reads data from a JDBC source using the specified JDBC URL and SQL pushdown query.
-    The function can be parameterized with options to customize the JDBC read process, such
-    as specifying a fetch size and partitioning options.
-    """
-    df = (
-        SPARK.read.format("jdbc")
-            .option("url", jdbc_url)
-            .option("driver", driver)
-            .option("dbtable", sql_pushdown_query)
-            .option("partitionColumn", partition_column)
-            .option("lowerBound", lower_bound)
-            .option("upperBound", upper_bound)
-            .option("numPartitions", num_partitions)
-    )
-    if fetchsize:
-        df = df.option("fetchsize", fetchsize)
-    return df.load()
-
 
 
 def main():
@@ -84,10 +60,13 @@ def main():
     data_frame: DataFrame = jdbc_read(
         jdbc_url=jdbc_url, sql_pushdown_query=sql_pushdown_query
     )
+    data_frame = add_jdbc_extract_time_field(data_frame=data_frame)
     LOGGER.info(f"DataFrame Schema: {data_frame.printSchema()}")
 
     if _repartition_dataframe:
-        data_frame, partition_num = repartition_dataframe(spark=SPARK, data_frame=data_frame)
+        data_frame, partition_num = repartition_dataframe(
+            spark=SPARK, data_frame=data_frame
+        )
         LOGGER.info(f"Repartitioned DataFrame with partition_num: {partition_num}")
 
     LOGGER.info(f"Writing DatFrame to: {_extract_s3_uri}")
@@ -118,7 +97,7 @@ if __name__ == "__main__":
     parser.add_argument("--repartition_dataframe", type=bool, help="", default=True)
     parser.add_argument("--extract_s3_uri", type=str, help="")
 
-    args = parser.parse_args()
+    args, _ = parser.parse_args()
     _extract_type = args["extract_type"]
     _engine = args["engine"]
     _extract_table = args["extract_table"]

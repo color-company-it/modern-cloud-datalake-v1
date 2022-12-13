@@ -1,3 +1,5 @@
+import time
+
 JDBC_URLS: dict = {
     "postgresql": "jdbc:postgresql://{host}:{port}/{database}",
     "mysql": "jdbc:mysql://{host}:{port}/{database}",

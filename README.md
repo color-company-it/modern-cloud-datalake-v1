@@ -29,3 +29,6 @@ We also believe in the power of collaboration and are always looking for ways to
 Overall, this repository is a place for us to share our knowledge and expertise, as well as learn from others in the community. We're excited to see what we can accomplish together! 
 
 Thanks for checking out our repository! 🙌
+
+[![CodeQL](https://github.com/color-company-it/modern-cloud-datalake-v1/actions/workflows/codeql.yml/badge.svg)](https://github.com/color-company-it/modern-cloud-datalake-v1/actions/workflows/codeql.yml)
+[![GitHub Pages](https://github.com/color-company-it/modern-cloud-datalake-v1/actions/workflows/jekyll-gh-pages.yml/badge.svg)](https://github.com/color-company-it/modern-cloud-datalake-v1/actions/workflows/jekyll-gh-pages.yml)

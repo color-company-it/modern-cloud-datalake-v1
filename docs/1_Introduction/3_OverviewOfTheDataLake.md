@@ -1,4 +1,4 @@
-# 1.3 Overview of the DataLake
+# 3.1 Overview of the DataLake
 
 A scalable company data lake developed in the cloud using Python and Terraform would likely have a distributed
 a cloud-based data storage provider, such as Amazon S3, was used to create the data lake itself. This
@@ -22,37 +22,37 @@ Using Python and Terraform, the architecture and design of a scalable enterprise
 would want to offer a modular, scalable, and adaptable method for handling and storing a lot of data in the
 cloud.
 
+![DataLake Architecture](../src/arhitecture.png)
+
 ## The ETL way
 
-> sticking to the basics before we go mad with power.
+> Sticking to the basics before we go mad with power.
 
-A system for extracting data from various sources, transforming the data into a format suitable for analysis, and
-loading the data into a data warehouse or another data storage system is known as a scalable cloud-based ETL pipeline.
-Such a system's design technique and rationale often take into account a variety of factors, such as the particular
-needs of the company or organization, the type and volume of data being processed, and the accessibility and scalability
-of the underlying cloud infrastructure.
+The ETL solution is a scalable, cloud-based system for extracting, transforming, and loading data from various sources
+into a data storage system. the system uses distributed computing and storage technologies like Hadoop and Spark to
+process large volumes of data efficiently and affordably. Additionally, the system includes stream processing
+technologies like Apache Flink and Apache Storm to support real-time data processing.
 
-The necessity to handle enormous volumes of data efficiently and affordably is a crucial factor in the design of a
-scalable cloud-based ETL pipeline. Usually, this entails the use of distributed computing and storage technologies like
-Hadoop or Spark, which are made to process data concurrently across several cluster nodes. As a result, the ETL pipeline
-can expand horizontally by adding more nodes as necessary to handle growing data volumes.
+### Features
 
-The requirement to allow real-time or nearly real-time data processing is another crucial factor. Businesses and
-organizations frequently need to be able to assess data as soon as it becomes available so that they may make decisions
-that are both timely and well-informed. A scalable cloud-based ETL pipeline may include stream processing technologies,
-like Apache Flink or Apache Storm, which are made to process data in real-time as it is generated, to support this
-requirement.
+- Scalable: the system can expand horizontally by adding more nodes to handle growing data volumes.
+- Real-time processing: the system can process data in real-time as it is generated.
+- Distributed computing and storage: we use technologies like Hadoop and Spark to process and store data efficiently.
+- Design: Our ETL pipeline is designed to meet the unique needs of your business or organization. We take into account
+  factors such as the type and volume of data to be processed, as well as the accessibility and scalability of the
+  underlying cloud infrastructure.
 
-The design of a scalable cloud-based ETL pipeline should take into account the organization's unique business objectives
-and requirements in addition to these technical ones. A clear set of pipeline criteria and objectives as well as a list
-of the precise sources and categories of data that will be processed may be necessary to accomplish this. Determining
-the target data warehouse or storage system where the data will be loaded, as well as the data transformations and
-cleaning procedures that will be used on the data, may also be necessary.
+### Schema
 
-Overall, designing a scalable cloud-based ETL pipeline requires both technical know-how and an understanding of the
-needs and objectives of the business. It is feasible to create a pipeline that is effective, scalable, and able to
-satisfy the unique needs of the company by carefully taking these criteria into account.
-Create the schema for a cutting-edge, scalable, cloud-based ETL solution.
+- Data sources: the specific sources and categories of data that will be processed by the pipeline.
+- Data transformations: the cleaning and transformation procedures that will be applied to the data.
+- Target data storage: the data warehouse or storage system where the transformed data will be loaded.
+- Benefits Customized to your business needs: the solution is designed to meet the unique requirements of your
+  organization.
+- Scalable and efficient: the solution can handle large volumes of data using distributed computing and storage
+  technologies.
+- Real-time processing: the solution can process data in real-time as it is generated, allowing you to make timely and
+  well-informed decisions.
 
 The components that make up a modern, highly modular, scalable, cloud-based ETL solution often cooperate to extract,
 convert, and load data. The following elements may be found in the solution's schema:
@@ -87,14 +87,12 @@ alerts in the event that any problems or faults are found. A variety of methods,
 measures, or machine learning, may be used by the monitoring and alerting component to monitor the system and spot
 potential problems.
 
-![An Example from EDCUBA](https://cdn.educba.com/academy/wp-content/uploads/2019/12/Data-Lake.png.webp)
-
 In general, a modern, highly modular, and scalable cloud-based ETL solution comprises of a variety of various parts that
 cooperate to effectively extract, convert, and load data. It is possible to develop a solution that can manage massive
 volumes of data and serve the unique demands and requirements of the business or organization by carefully developing
 and putting each of these components into place.
 
-# 1.2 Conventions
+# 3.2 Conventions
 
 In an ETL DataLake context, there isn't a single "optimal" naming strategy for script and configuration files because
 various businesses may have their own preferences and traditions. However, you might find the following general
@@ -139,7 +137,5 @@ And `version_number` is a whole integer:
 - and so on...
 
 Scripts and other core features will follow a similar approach, and if a constituent is not needed or unavaialble, the
-namespace will
-be left blank. So if there is no `sdlc_stage` the name would
-be `<source_name>_<etl_stage>__<use_case>_<version_number>`.
-This is similar to how AWS constructs arns, where namespaces irrelevant to the arn is left blank resulting in an `::`.
+namespace will be left blank. So if there is no `sdlc_stage` the name would
+be `<source_name>_<etl_stage>_<use_case>_<version_number>`.

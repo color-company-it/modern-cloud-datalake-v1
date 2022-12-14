@@ -139,3 +139,22 @@ And `version_number` is a whole integer:
 Scripts and other core features will follow a similar approach, and if a constituent is not needed or unavaialble, the
 namespace will be left blank. So if there is no `sdlc_stage` the name would
 be `<source_name>_<etl_stage>_<use_case>_<version_number>`.
+
+# 3.3 The Data Engineer fit for this Lake
+
+A Datalake Data Engineer is responsible for managing and maintaining the data infrastructure of a datalake. This
+includes tasks such as designing and implementing data pipelines to extract, transform, and load data into the datalake,
+as well as ensuring that the datalake is scalable, secure, and performant.
+
+It is important that the data engineer is **not** responsible for the quality of the data coming into the datalake, nor
+the server they are extracting data from, because these tasks fall outside their scope of responsibility. The quality
+of the data is the responsibility of the data owner or source, and the server is the responsibility of the IT or
+infrastructure team.
+
+Furthermore, the data engineer is **not** responsible for knowing the data itself or producing analytical reports on the
+data. These tasks are typically the responsibility of data analysts or data scientists, who have the specialized
+knowledge and skills to work with the data and extract insights from it.
+
+The main objective of a Datalake Data Engineer is to get data into the datalake in a timely and accurate manner. By
+doing so, they enable other teams to access and use the data for a variety of purposes, such as reporting, analytics,
+machine learning, and more.

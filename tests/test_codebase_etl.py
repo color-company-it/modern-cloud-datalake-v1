@@ -93,10 +93,10 @@ class TestCalculateWorkerNodes(unittest.TestCase):
 
     def test_calculate_worker_nodes_with_rounding(self):
         # test with a number that needs to be rounded up
-        self.assertEqual(calculate_worker_nodes(200000, 5, 100000), 5)
+        self.assertEqual(calculate_worker_nodes(200000, 5, 100000), 3)
 
         # test with another number that needs to be rounded up
-        self.assertEqual(calculate_worker_nodes(250000, 6, 100000), 7)
+        self.assertEqual(calculate_worker_nodes(250000, 6, 100000), 3)
 
 
 class TestConvertMemoryToGb(unittest.TestCase):

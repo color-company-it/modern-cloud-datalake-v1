@@ -1,4 +1,6 @@
 name: Run PyTest
+  env:
+    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
 
 on: [ push ]
 
@@ -16,5 +18,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pyspark boto3 requests
       - name: Run tests
+        with:
+          aws-region: us-east-1
         run: |
           pytest

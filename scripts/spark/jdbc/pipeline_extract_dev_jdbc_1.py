@@ -13,14 +13,15 @@ from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
 
 from codebase import get_logger
-from codebase.aws.secrets import get_secrets_dict
-from codebase.extract import get_jdbc_url
-from codebase.extract.sql import (
-    generate_sql_pushdown_query,
+from codebase.etl import get_jdbc_url, repartition_dataframe
+from codebase.etl.extract import (
     generate_sql_where_condition,
+    generate_sql_pushdown_query,
+    jdbc_read,
+    add_jdbc_extract_time_field,
     parse_extract_table,
 )
-from codebase.extract.utils import repartition_dataframe, add_jdbc_extract_time_field, jdbc_read
+from codebase_layer.python.codebase.aws.secrets import get_secrets_dict
 
 SC = SparkContext()
 SPARK = SparkSession.builder.appName("ExtractJDBCSource").getOrCreate()

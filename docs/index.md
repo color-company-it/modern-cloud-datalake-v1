@@ -24,7 +24,7 @@ from their data and drive business growth.
     4. [JDBC ETL Terraform](2_ExtractTransformLoadPipelines/4_JDBC_ETLTerraform.md)
     5. [API Extract](2_ExtractTransformLoadPipelines/5_APIExtract.md)
 3. JDBC Sources
-    1. [Optimising JDBC ETL Pipelines](3_JDBCSources/1_OptimisingJDBCETLPipelines.md)
+    1. [Optimising JDBC ETL Pipelines](2_ExtractTransformLoadPipelines/1_OptimisingJDBCETLPipelines.md)
 4. Environments And Layers
     1. [Configuration](4_EnvironmentsAndLayers/1_Configuration.md)
     2. [Infrastructure](4_EnvironmentsAndLayers/2_Infrastructure.md)

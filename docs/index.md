@@ -21,8 +21,10 @@ from their data and drive business growth.
     1. [JDBC Extract Pipeline](2_ExtractTransformLoadPipelines/1_JDBCExtract.md)
     2. [JDBC Transform Pipeline](2_ExtractTransformLoadPipelines/2_JDBCTransform.md)
     3. [JDBC Load Pipeline](2_ExtractTransformLoadPipelines/3_JDBCLoad.md)
+    4. [JDBC ETL Terraform](2_ExtractTransformLoadPipelines/4_JDBC_ETLTerraform.md)
+    5. [API Extract](2_ExtractTransformLoadPipelines/5_APIExtract.md)
 3. JDBC Sources
-    1. [Optimising JDBC ETL Pipelines](3_JDBCSources/1_OptimisingJDBCETLPipelines.md)
+    1. [Optimising JDBC ETL Pipelines](2_ExtractTransformLoadPipelines/1_OptimisingJDBCETLPipelines.md)
 4. Environments And Layers
     1. [Configuration](4_EnvironmentsAndLayers/1_Configuration.md)
     2. [Infrastructure](4_EnvironmentsAndLayers/2_Infrastructure.md)
@@ -31,9 +33,11 @@ from their data and drive business growth.
     5. [Testing](4_EnvironmentsAndLayers/5_Testing.md)
     6. [Monitoring](4_EnvironmentsAndLayers/6_Monitoring.md)
 5. Testing And Maintenance
-    1. Test Cases and Methodologies
-    2. Troubleshooting
-    3. FAQs
+    1. [Test Cases and Methodologies](5_TestingAndMaintenance/1_TestCasesAndMethodologies.md)
+    2. [Troubleshooting](5_TestingAndMaintenance/2_Troubleshooting.md)
+6. FAQs & Additional Resources
+    1. [FAQs](6_FAQsAndAdditionalResources/1_FAQs.md)
+    2. [Additional Resources](6_FAQsAndAdditionalResources/2_AdditionalResources.md)
 
 Obsidian is a powerful, open-source documentation application that allows you to create, organize, and share your notes
 and ideas. With Obsidian, you can create your own "brain" by connecting your notes together with links and

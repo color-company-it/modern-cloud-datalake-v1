@@ -1,4 +1,4 @@
-# codebase      --------------------------------------------------------------------------------------------------------
+# test_codebase      --------------------------------------------------------------------------------------------------------
 resource "aws_s3_bucket" "codebase-bucket" {
   bucket = "${var.business-name}-codebase"
   acl    = "private"
@@ -13,7 +13,7 @@ module "codebase-archive" {
   source_dir  = "${path.root}/../codebase/"
 }
 
-# codebase lambda layer
+# test_codebase lambda layer
 locals {
   codebase-lambda-layer-local-dir = "${path.root}/../codebase_layer"
 }

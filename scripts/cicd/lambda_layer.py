@@ -47,4 +47,4 @@ if __name__ == "__main__":
     shutil.copytree(args.input_dir, f"{args.output_dir}/python/{args.module_name}")
 
     # Can be run via cmd from root:
-    #     python scripts/cicd/lambda_layer.py -i codebase/ -o codebase_layer/ -n codebase
+    #     python scripts/cicd/lambda_layer.py -i test_codebase/ -o codebase_layer/ -n test_codebase

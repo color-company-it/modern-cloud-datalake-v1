@@ -5,11 +5,11 @@ locals {
 
   /*
   This Terraform code defines a map named repository-layers that contains
-  the file paths of four directories: codebase, configuration, orchestration,
+  the file paths of four directories: test_codebase, configuration, orchestration,
   and scripts. The file paths are relative to the root of the current directory.
   This map can be used to access the file paths of the four directories in
-  your Terraform code. For example, you can use the codebase key to access
-  the file path of the codebase directory.
+  your Terraform code. For example, you can use the test_codebase key to access
+  the file path of the test_codebase directory.
   */
   repository-layers = {
     codebase      = "${path.root}/../codebase/"

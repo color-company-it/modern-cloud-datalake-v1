@@ -7,7 +7,7 @@ from botocore.exceptions import ClientError
 
 from codebase.config import ConfigDataStruct
 from codebase.config.freeze import Freeze
-from codebase_layer.python.codebase.config import ExtractDataStruct
+from codebase.config import ExtractDataStruct
 
 S3 = boto3.client("s3")
 
@@ -106,7 +106,7 @@ class TestFreeze(unittest.TestCase):
                 Bucket=bucket, Key=key, Body=expected_body
             )
         except ClientError as error:
-            if error.response['Error']['Code'] == "AccessDenied":
+            if error.response["Error"]["Code"] == "AccessDenied":
                 # self.assertEqual(expected_body, freeze)
                 pass
             else:
@@ -133,7 +133,7 @@ class TestFreeze(unittest.TestCase):
             # Assert that the method returns the expected data
             self.assertEqual(data, expected_data)
         except ClientError as error:
-            if error.response['Error']['Code'] == "AccessDenied":
+            if error.response["Error"]["Code"] == "AccessDenied":
                 pass
             else:
                 raise error from error

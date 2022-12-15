@@ -1,10 +1,16 @@
 import unittest
-from datetime import datetime
 
-from codebase.etl import get_jdbc_url, calculate_worker_nodes, convert_memory_to_gb, \
-    calculate_partitions_and_worker_nodes
-from codebase.etl.extract import generate_sql_where_condition, generate_sql_pushdown_query, parse_extract_table, \
-    add_jdbc_extract_time_field
+from codebase.etl import (
+    get_jdbc_url,
+    calculate_worker_nodes,
+    convert_memory_to_gb,
+    calculate_partitions_and_worker_nodes,
+)
+from codebase.etl.extract import (
+    generate_sql_where_condition,
+    generate_sql_pushdown_query,
+    parse_extract_table,
+)
 
 
 class TestJdbcUtils(unittest.TestCase):
@@ -178,7 +184,9 @@ class TestCalculatePartitionsAndWorkerNodes(unittest.TestCase):
 
 class TestExtract(unittest.TestCase):
     def test_fe_extract(self):
-        result: object = generate_sql_where_condition("hwm_col", "lwm_value", "hwm_value", "FE")
+        result: object = generate_sql_where_condition(
+            "hwm_col", "lwm_value", "hwm_value", "FE"
+        )
         self.assertEqual(result, "")
 
     def test_pe_extract(self):
@@ -187,28 +195,40 @@ class TestExtract(unittest.TestCase):
 
     def test_invalid_extract(self):
         with self.assertRaises(ValueError):
-            generate_sql_where_condition("hwm_col", "lwm_value", "hwm_value", "invalid_type")
+            generate_sql_where_condition(
+                "hwm_col", "lwm_value", "hwm_value", "invalid_type"
+            )
 
     def test_query_generation(self):
         sql_where_condition = "WHERE hwm_col > lwm_value and hwm_col <= hwm_value"
-        result = generate_sql_pushdown_query("db_name.db_schema.db_table", sql_where_condition)
-        self.assertEqual(result,
-                         "(SELECT * FROM db_name.db_schema.db_table WHERE hwm_col > lwm_value and hwm_col <= hwm_value) db_table_alias")
+        result = generate_sql_pushdown_query(
+            "db_name.db_schema.db_table", sql_where_condition
+        )
+        self.assertEqual(
+            result,
+            "(SELECT * FROM db_name.db_schema.db_table WHERE hwm_col > lwm_value and hwm_col <= hwm_value) db_table_alias",
+        )
 
     def test_parse_extract_table_full_namespace(self):
         result = parse_extract_table("db_name.db_schema.db_table")
-        self.assertDictEqual(result, {"db_name": "db_name", "db_schema": "db_schema", "db_table": "db_table"})
+        self.assertDictEqual(
+            result,
+            {"db_name": "db_name", "db_schema": "db_schema", "db_table": "db_table"},
+        )
 
     def test_parse_extract_table_partial_namespace(self):
         result = parse_extract_table("db_name.db_table")
         print(result)
-        self.assertDictEqual(result, {"db_name": "db_name", "db_schema": None, "db_table": "db_table"})
+        self.assertDictEqual(
+            result, {"db_name": "db_name", "db_schema": None, "db_table": "db_table"}
+        )
 
     def test_parse_extract_table_no_namespace(self):
         result = parse_extract_table("db_table")
-        self.assertDictEqual(result, {"db_name": None, "db_schema": None, "db_table": "db_table"})
+        self.assertDictEqual(
+            result, {"db_name": None, "db_schema": None, "db_table": "db_table"}
+        )
 
     def test_parse_extract_table_invalid_namespace(self):
         with self.assertRaises(ValueError):
             parse_extract_table("db_name.db_schema.db_table.invalid")
-

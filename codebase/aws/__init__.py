@@ -25,10 +25,14 @@ def retry(func: Callable) -> Callable:
             if response.status_code == 200:
                 return response
             else:
-                sleep_time = backoff_factor * (2 ** i)
+                sleep_time = backoff_factor * (2**i)
                 sys.stdout.write(
-                    str(f"Boto3 call returned status code: {response.status_code} "
-                        f"attempting again in {sleep_time} seconds. Attempt {i}/3") + '\n')
+                    str(
+                        f"Boto3 call returned status code: {response.status_code} "
+                        f"attempting again in {sleep_time} seconds. Attempt {i}/3"
+                    )
+                    + "\n"
+                )
                 time.sleep(sleep_time)
         return response
 

@@ -61,20 +61,18 @@ class TestSecretsManager(unittest.TestCase):
         secrets_name = "my_secrets"
         secret_value = '{"username": "user123", "password": "pass123"}'
         expected_secrets_dict = json.loads(secret_value)
-        mock_response = {
-            "SecretString": secret_value
-        }
+        mock_response = {"SecretString": secret_value}
         mock_client.return_value.get_secret_value.return_value = mock_response
 
         # Create an instance of the SecretsManager class
-        secrets_manager = SecretsManager("us-east-1")
+        secrets_manager = SecretsManager(region_name="us-east-1")
 
         # Call the get_secrets_dict method
         # ToDo: fix this so the mock does not try to call an actual resource
         try:
             secrets_dict = secrets_manager.get_secrets_dict(secrets_name)
         except ClientError as error:
-            if error.response['Error']['Code'] == "ResourceNotFoundException":
+            if error.response["Error"]["Code"] == "ResourceNotFoundException":
                 secrets_dict = expected_secrets_dict
             else:
                 raise error from error

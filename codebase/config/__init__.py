@@ -24,21 +24,21 @@ class ExtractDataStruct(ConfigDataStruct):
     """
 
     def __init__(
-            self,
-            version: int,
-            source_name: str,
-            sdlc_stage: str,
-            jdbc_engine: str,
-            jdbc_host: str,
-            jdbc_port: str,
-            vcpu: int,
-            memory: dict,
-            jdbc_table: str,
-            watermark_data_type: str,
-            lower_bound: [int, str, float],
-            upper_bound: [int, str, float],
-            partition_column: str,
-            num_partitions: int,
+        self,
+        version: int,
+        source_name: str,
+        sdlc_stage: str,
+        jdbc_engine: str,
+        jdbc_host: str,
+        jdbc_port: str,
+        vcpu: int,
+        memory: dict,
+        jdbc_table: str,
+        watermark_data_type: str,
+        lower_bound: [int, str, float],
+        upper_bound: [int, str, float],
+        partition_column: str,
+        num_partitions: int,
     ):
         self.version = version
         self.source_name = source_name

@@ -32,3 +32,4 @@ Thanks for checking out our repository! 🙌
 
 [![CodeQL](https://github.com/color-company-it/modern-cloud-datalake-v1/actions/workflows/codeql.yml/badge.svg)](https://github.com/color-company-it/modern-cloud-datalake-v1/actions/workflows/codeql.yml)
 [![GitHub Pages](https://github.com/color-company-it/modern-cloud-datalake-v1/actions/workflows/jekyll-gh-pages.yml/badge.svg)](https://github.com/color-company-it/modern-cloud-datalake-v1/actions/workflows/jekyll-gh-pages.yml)
+[![Run PyTest](https://github.com/color-company-it/modern-cloud-datalake-v1/actions/workflows/pytest.yml/badge.svg)](https://github.com/color-company-it/modern-cloud-datalake-v1/actions/workflows/pytest.yml)

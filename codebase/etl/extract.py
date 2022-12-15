@@ -13,7 +13,7 @@ from codebase import EXTRACT_TYPES
 
 
 def generate_sql_where_condition(
-        hwm_col_name: str, lwm_value: str, hwm_value: str, extract_type: str
+    hwm_col_name: str, lwm_value: str, hwm_value: str, extract_type: str
 ) -> str:
     """
     Generate a SQL WHERE condition that filters records by a high watermark column.
@@ -69,31 +69,17 @@ def parse_extract_table(extract_table: str) -> dict:
 
     # full_namespace
     if len(parts) == 3:
-        return {
-            "db_name": parts[0],
-            "db_schema": parts[1],
-            "db_table": parts[2]
-        }
+        return {"db_name": parts[0], "db_schema": parts[1], "db_table": parts[2]}
 
     # partial_namespace
     if len(parts) == 2:
-        return {
-            "db_name": parts[0],
-            "db_schema": None,
-            "db_table": parts[1]
-        }
+        return {"db_name": parts[0], "db_schema": None, "db_table": parts[1]}
 
     # no_namespace
     if len(parts) == 1:
-        return {
-            "db_name": None,
-            "db_schema": None,
-            "db_table": parts[0]
-        }
+        return {"db_name": None, "db_schema": None, "db_table": parts[0]}
 
-    raise ValueError(
-        "The provided namespace is invalid when parsing extract table."
-    )
+    raise ValueError("The provided namespace is invalid when parsing extract table.")
 
 
 def add_jdbc_extract_time_field(data_frame: DataFrame) -> DataFrame:
@@ -102,15 +88,15 @@ def add_jdbc_extract_time_field(data_frame: DataFrame) -> DataFrame:
 
 
 def jdbc_read(
-        spark: SparkSession,
-        jdbc_url: str,
-        sql_pushdown_query: str,
-        driver: str,
-        partition_column: str,
-        lower_bound: int,
-        upper_bound: int,
-        num_partitions: int,
-        fetchsize: int,
+    spark: SparkSession,
+    jdbc_url: str,
+    sql_pushdown_query: str,
+    driver: str,
+    partition_column: str,
+    lower_bound: int,
+    upper_bound: int,
+    num_partitions: int,
+    fetchsize: int,
 ) -> DataFrame:
     """
     Reads data from a JDBC source using the specified JDBC URL and SQL pushdown query.
@@ -119,13 +105,13 @@ def jdbc_read(
     """
     data_frame = (
         spark.read.format("jdbc")
-            .option("url", jdbc_url)
-            .option("driver", driver)
-            .option("dbtable", sql_pushdown_query)
-            .option("partitionColumn", partition_column)
-            .option("lowerBound", lower_bound)
-            .option("upperBound", upper_bound)
-            .option("numPartitions", num_partitions)
+        .option("url", jdbc_url)
+        .option("driver", driver)
+        .option("dbtable", sql_pushdown_query)
+        .option("partitionColumn", partition_column)
+        .option("lowerBound", lower_bound)
+        .option("upperBound", upper_bound)
+        .option("numPartitions", num_partitions)
     )
     if fetchsize:
         data_frame = data_frame.option("fetchsize", fetchsize)

@@ -1,4 +1,4 @@
-from infrastructure_mappings import SDLC_SAGES
+from codebase import SDLC_SAGES
 
 
 class ConfigDataStruct:
@@ -6,14 +6,15 @@ class ConfigDataStruct:
     Base Config Data Struct.
     """
 
-    def set_sdlc_stage(self, stage: str):
+    @staticmethod
+    def set_sdlc_stage(stage: str):
         """
         Ensure the SDLC stage is valid.
         """
         if stage in SDLC_SAGES:
             return stage
         raise ValueError(
-            f"The SDLC stage provided: {stage} is not one of supported {self.SDLC_SAGES}"
+            f"The SDLC stage provided: {stage} is not one of supported {SDLC_SAGES}"
         )
 
 
@@ -23,21 +24,21 @@ class ExtractDataStruct(ConfigDataStruct):
     """
 
     def __init__(
-        self,
-        version: int,
-        source_name: str,
-        sdlc_stage: str,
-        jdbc_engine: str,
-        jdbc_host: str,
-        jdbc_port: str,
-        vcpu: int,
-        memory: dict,
-        jdbc_table: str,
-        watermark_data_type: str,
-        lower_bound: [int, str, float],
-        upper_bound: [int, str, float],
-        partition_column: str,
-        num_partitions: int,
+            self,
+            version: int,
+            source_name: str,
+            sdlc_stage: str,
+            jdbc_engine: str,
+            jdbc_host: str,
+            jdbc_port: str,
+            vcpu: int,
+            memory: dict,
+            jdbc_table: str,
+            watermark_data_type: str,
+            lower_bound: [int, str, float],
+            upper_bound: [int, str, float],
+            partition_column: str,
+            num_partitions: int,
     ):
         self.version = version
         self.source_name = source_name

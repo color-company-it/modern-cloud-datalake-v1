@@ -9,7 +9,7 @@ CLIENT = boto3.client("secretsmanager")
 
 class SecretsManager(AWS):
     def __init__(self, region_name: str):
-        super(AWS).__init__(region_name)
+        super().__init__(region_name)
         self._client = self._session.client("secretsmanager")
 
     def get_client(self):

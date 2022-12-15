@@ -3,17 +3,17 @@ This module contains a collection of methods
 used to dynamically allocate the ideal amount
 of resources for an extract job.
 """
-import math
 
-from codebase.infrastructure_mappings import EXTRACT_TYPES
 import time
 
 from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import lit
 
+from codebase import EXTRACT_TYPES
+
 
 def generate_sql_where_condition(
-    hwm_col_name: str, lwm_value: str, hwm_value: str, extract_type: str
+        hwm_col_name: str, lwm_value: str, hwm_value: str, extract_type: str
 ) -> str:
     """
     Generate a SQL WHERE condition that filters records by a high watermark column.
@@ -66,11 +66,34 @@ def parse_extract_table(extract_table: str) -> dict:
 
     # Return a dictionary containing the database name, schema, and table name
     # The value of each key is set to None if not specified in the extract_table variable
-    return {
-        "db_name": parts[0] if len(parts) >= 1 else None,
-        "db_schema": parts[1] if len(parts) >= 2 else None,
-        "db_table": parts[2] if len(parts) >= 3 else None,
-    }
+
+    # full_namespace
+    if len(parts) == 3:
+        return {
+            "db_name": parts[0],
+            "db_schema": parts[1],
+            "db_table": parts[2]
+        }
+
+    # partial_namespace
+    if len(parts) == 2:
+        return {
+            "db_name": parts[0],
+            "db_schema": None,
+            "db_table": parts[1]
+        }
+
+    # no_namespace
+    if len(parts) == 1:
+        return {
+            "db_name": None,
+            "db_schema": None,
+            "db_table": parts[0]
+        }
+
+    raise ValueError(
+        "The provided namespace is invalid when parsing extract table."
+    )
 
 
 def add_jdbc_extract_time_field(data_frame: DataFrame) -> DataFrame:
@@ -79,15 +102,15 @@ def add_jdbc_extract_time_field(data_frame: DataFrame) -> DataFrame:
 
 
 def jdbc_read(
-    spark: SparkSession,
-    jdbc_url: str,
-    sql_pushdown_query: str,
-    driver: str,
-    partition_column: str,
-    lower_bound: int,
-    upper_bound: int,
-    num_partitions: int,
-    fetchsize: int,
+        spark: SparkSession,
+        jdbc_url: str,
+        sql_pushdown_query: str,
+        driver: str,
+        partition_column: str,
+        lower_bound: int,
+        upper_bound: int,
+        num_partitions: int,
+        fetchsize: int,
 ) -> DataFrame:
     """
     Reads data from a JDBC source using the specified JDBC URL and SQL pushdown query.
@@ -96,13 +119,13 @@ def jdbc_read(
     """
     data_frame = (
         spark.read.format("jdbc")
-        .option("url", jdbc_url)
-        .option("driver", driver)
-        .option("dbtable", sql_pushdown_query)
-        .option("partitionColumn", partition_column)
-        .option("lowerBound", lower_bound)
-        .option("upperBound", upper_bound)
-        .option("numPartitions", num_partitions)
+            .option("url", jdbc_url)
+            .option("driver", driver)
+            .option("dbtable", sql_pushdown_query)
+            .option("partitionColumn", partition_column)
+            .option("lowerBound", lower_bound)
+            .option("upperBound", upper_bound)
+            .option("numPartitions", num_partitions)
     )
     if fetchsize:
         data_frame = data_frame.option("fetchsize", fetchsize)

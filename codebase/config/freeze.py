@@ -18,7 +18,9 @@ import pickle
 
 import boto3
 
-S3 = boto3.client("S3")
+from codebase.aws import retry
+
+S3 = boto3.client("s3")
 
 
 class Freeze:
@@ -30,6 +32,7 @@ class Freeze:
         """
         self.data = data
 
+    @retry
     def save_to_s3(self, bucket: str, key: str) -> None:
         """
         Serialize the object using pickle and
@@ -43,6 +46,7 @@ class Freeze:
         S3.put_object(Bucket=bucket, Key=key, Body=data)
 
     @staticmethod
+    @retry
     def load_from_s3(bucket: str, key: str) -> object:
         """
         Download the object from S3 and

@@ -2,15 +2,15 @@ import math
 
 from pyspark.sql import SparkSession, DataFrame
 
-JDBC_URLS: dict = {
-    "postgresql": "jdbc:postgresql://{host}:{port}/{database}",
-    "mysql": "jdbc:mysql://{host}:{port}/{database}",
-    "oracle": "jdbc:oracle:thin:{user}/{password}@{host}:{port}:{database}",
-    "mssql": "jdbc:sqlserver://{host}:{port};database={database}",
-}
+JDBC_ENGINES: list = [
+    "postgres",
+    "mysql",
+    "oracle",
+    "mssql"
+]
 
 JDBC_DRIVERS: dict = {
-    "postgresql": "org.postgresql.Driver",
+    "postgres": "org.postgresql.Driver",
     "mysql": "com.mysql.cj.jdbc.Driver",
     "oracle": "oracle.jdbc.OracleDriver",
     "mssql": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
@@ -33,15 +33,20 @@ def get_jdbc_url(engine: str, jdbc_params: dict) -> str:
                                 }
     :return: JDBC Connection string.
     """
-
-    if engine in JDBC_URLS:
-        url = JDBC_URLS[engine]
-        return url.format(jdbc_params)
-    raise ValueError(f"The provided engine: {engine} is not supported. " f"{JDBC_URLS}")
+    if engine in JDBC_ENGINES:
+        if engine == "postgres":
+            return f"jdbc:postgresql://{jdbc_params['host']}:{jdbc_params['port']}/{jdbc_params['database']}"
+        if engine == "mysql":
+            return f"jdbc:mysql://{jdbc_params['host']}:{jdbc_params['port']}/{jdbc_params['database']}"
+        if engine == "oracle":
+            return f"jdbc:oracle:thin:{jdbc_params['user']}/{jdbc_params['password']}@{jdbc_params['host']}:{jdbc_params['port']}:{jdbc_params['database']}"
+        if engine == "mssql":
+            return f"jdbc:sqlserver://{jdbc_params['host']}:{jdbc_params['port']};database={jdbc_params['database']}"
+    raise ValueError(f"The provided engine: {engine} is not supported. " f"{JDBC_ENGINES}")
 
 
 def repartition_dataframe(
-    spark: SparkSession, data_frame: DataFrame
+        spark: SparkSession, data_frame: DataFrame
 ) -> [DataFrame, int]:
     """
     This method takes a dataframe as an input, calculates the ideal number
@@ -64,7 +69,7 @@ def repartition_dataframe(
 
 
 def calculate_worker_nodes(
-    row_count: int, partitions: int, target_nodes: int = 100000
+        row_count: int, partitions: int, target_nodes: int = 100000
 ) -> int:
     """
     Calculate the average number of rows per partition.
@@ -100,7 +105,7 @@ def convert_memory_to_gb(memory: int, unit: str) -> int:
     :return: GB value of memory unit.
     """
     if unit == "KB":
-        memory_in_gb = memory / 1024**2
+        memory_in_gb = memory / 1024 ** 2
     elif unit == "MB":
         memory_in_gb = memory / 1024
     elif unit == "GB":
@@ -114,12 +119,12 @@ def convert_memory_to_gb(memory: int, unit: str) -> int:
 
 
 def calculate_partitions_and_worker_nodes(
-    row_count: int,
-    db_cpu: int,
-    db_memory: int,
-    target_rows_per_worker_node: int,
-    target_rows_per_cpu: int,
-    target_rows_per_gb_memory: int,
+        row_count: int,
+        db_cpu: int,
+        db_memory: int,
+        target_rows_per_worker_node: int,
+        target_rows_per_cpu: int,
+        target_rows_per_gb_memory: int,
 ) -> [int, int]:
     """
     This function uses the following logic to calculate the ideal number of partitions and worker nodes:
@@ -156,8 +161,8 @@ def calculate_partitions_and_worker_nodes(
     # average number of rows per GB of memory, the target number
     # of rows per worker node, and the target number of rows per GB of memory
     ideal_worker_nodes = (
-        avg_rows_per_gb_memory / target_rows_per_worker_node
-    ) / target_rows_per_gb_memory
+                                 avg_rows_per_gb_memory / target_rows_per_worker_node
+                         ) / target_rows_per_gb_memory
 
     # Round up the ideal number of partitions
     # and worker nodes to the nearest whole number

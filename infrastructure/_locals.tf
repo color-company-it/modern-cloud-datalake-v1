@@ -1,7 +1,7 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  python-modules = "requests==2.28.1,${module.codebase-archive.object_uri}"
+  python-modules = "requests==2.28.1"
 
   /*
   This Terraform code defines a map named repository-layers that contains

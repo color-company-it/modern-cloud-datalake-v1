@@ -6,3 +6,8 @@ repos:
         entry: python scripts/cicd/lambda_layer.py -i codebase/ -o codebase_layer/ -n codebase
         language: system
         pass_filenames: false
+      - id: wheel-codebase-module
+        name: wheel-codebase-module
+        entry: python setup.py bdist_wheel
+        language: system
+        pass_filenames: false

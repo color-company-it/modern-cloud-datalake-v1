@@ -1,0 +1,68 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowCloudWatchMetrics",
+      "Effect": "Allow",
+      "Action": "cloudwatch:PutMetricData",
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowCloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogStream",
+        "logs:CreateLogGroup",
+        "logs:PutLogEvents"
+      ],
+      "Resource": [
+        "arn:aws:logs:${region-name}:${account-id}:log-group:aws-glue",
+        "arn:aws:logs:${region-name}:${account-id}:log-group:aws-glue:log-stream:glue-job-runs"
+      ]
+    },
+    {
+      "Sid": "AllowS3",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:DeleteObject",
+        "s3:GetBucketAcl",
+        "s3:GetBucketLocation"
+      ],
+      "Resource": [
+        "arn:aws:s3:::${script-s3-bucket-name}/*",
+        "arn:aws:s3:::${etl-s3-bucket-name}/*",
+        "arn:aws:s3:::${codebase-s3-bucket-name}/*"
+      ]
+    },
+    {
+      "Sid": "AllowGlue",
+      "Effect": "Allow",
+      "Action": [
+        "glue:GetConnection*",
+        "glue:*Tag*",
+        "glue:*Table*",
+        "glue:*Partition*",
+        "glue:*Database*"
+      ],
+      "Resource": [
+        "arn:aws:glue:*:${account-id}:table/*/*",
+        "arn:aws:glue:*:${account-id}:database/*/*",
+        "arn:aws:glue:*:${account-id}:connection/*/*",
+        "arn:aws:glue:*:${account-id}:catalog"
+      ]
+    },
+    {
+      "Sid": "AllowGlueListAll",
+      "Effect": "Allow",
+      "Action": [
+        "glue:List*"
+      ],
+      "Resource": [
+        "*"
+      ]
+    }
+  ]
+}

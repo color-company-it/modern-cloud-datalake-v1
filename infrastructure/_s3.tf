@@ -27,6 +27,13 @@ module "codebase-layer-archive" {
   source_dir  = local.codebase-lambda-layer-local-dir
 }
 
+# codebase.whl
+resource "aws_s3_bucket_object" "codebase-whl" {
+  bucket = aws_s3_bucket.codebase-bucket.bucket
+  key    = "codebase/codebase.whl"
+  source =  "${path.root}/../dist/*.whl"
+}
+
 # configuration     ----------------------------------------------------------------------------------------------------
 resource "aws_s3_bucket" "configuration-bucket" {
   bucket = "${var.business-name}-configuration"

@@ -43,3 +43,8 @@ variable "language-modules" {
   type        = string
   description = "A command separated list of language modules or S3 URI archived files"
 }
+
+variable "codebase" {
+  type = string
+  description = "The S3 ARN for the codebase.zip file for the glue job to use"
+}

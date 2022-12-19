@@ -1,5 +1,5 @@
 CREATE TABLE Customers (
-    CustomerID INT PRIMARY KEY NOT NULL,
+    CustomerID SERIAL PRIMARY KEY NOT NULL,
     FirstName VARCHAR(50) NOT NULL,
     LastName VARCHAR(50) NOT NULL,
     DateOfBirth DATE NOT NULL,

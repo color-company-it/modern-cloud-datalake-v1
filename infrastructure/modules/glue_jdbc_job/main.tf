@@ -1,7 +1,7 @@
 resource "aws_glue_job" "glue-jdbc-job" {
   name              = "${var.business-name}-${var.etl-stage}-${var.sdlc-stage}-jdbc-job"
   role_arn          = var.role-arn
-  glue_version      = "3.0"
+  glue_version      = "4.0"
   max_retries       = 0
   worker_type       = "G.1X"
   number_of_workers = 2
@@ -11,7 +11,7 @@ resource "aws_glue_job" "glue-jdbc-job" {
   }
 
   command {
-    name            = "glueetl"
+    name            = "pythonshell"
     script_location = var.script-location
   }
 
@@ -19,9 +19,8 @@ resource "aws_glue_job" "glue-jdbc-job" {
     # Args for Hudi 0.12.0
     "--datalake-formats" : "hudi"
     "--conf" : "spark.serializer=org.apache.spark.serializer.KryoSerializer --conf spark.sql.hive.convertMetastoreParquet=false"
-    "--job-language"              = var.job-language
-    "--additional-python-modules" = var.language-modules
-    "--extra-py-files"            = var.codebase
+    "--additional-python-modules" = var.codebase
+    "--enable-continuous-cloudwatch-log" : "true"
   }
 
   connections = var.connections

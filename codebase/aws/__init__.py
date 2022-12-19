@@ -1,43 +1,41 @@
 import os
 import sys
 import time
-from typing import Callable
+from functools import wraps
 
 import boto3
 
 
-def retry(func: Callable) -> Callable:
+def retry(max_retries: int = 5, backoff_factor: int = 2, exceptions=(Exception,)):
     """
-    A decorator that will attempt the boto3 request 3
-    times if the response code is not 200 before
-    returning the error.
+    Decorator function that retries a function if an error is raised, with a backoff factor.
+    :params max_retries (int, optional): Maximum number of times to retry the function if an error is raised. Default is 5.
+    :params backoff_factor (int, optional): The wait time between retries will be multiplied by this factor. Default is 2.
+    :params exceptions (tuple, optional): A tuple of exceptions to catch and retry. Default is (Exception,).
 
-    :param func: The function to wrap and retry.
-    :return: A wrapped version of the original function.
+    :returns: The decorated function.
     """
 
-    def wrapper(*args, **kwargs):
-        max_retries = 3
-        backoff_factor = 0.5
-
-        response = None
-        for i in range(1, max_retries + 1):
-            response = func(*args, **kwargs)
-            if response.status_code == 200:
-                return response
-            else:
-                sleep_time = backoff_factor * (2**i)
-                sys.stdout.write(
-                    str(
-                        f"Boto3 call returned status code: {response.status_code} "
-                        f"attempting again in {sleep_time} seconds. Attempt {i}/3"
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            retries = 0
+            while True:
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as e:
+                    retries += 1
+                    if retries > max_retries:
+                        raise e
+                    wait_time = backoff_factor ** retries
+                    sys.stdout.write(
+                        str(f"Encountered {e}. Retrying in {wait_time} seconds...")
                     )
-                    + "\n"
-                )
-                time.sleep(sleep_time)
-        return response
+                    time.sleep(wait_time)
 
-    return wrapper
+        return wrapper
+
+    return decorator
 
 
 class AWS:

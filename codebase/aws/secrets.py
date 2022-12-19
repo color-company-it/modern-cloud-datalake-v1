@@ -2,19 +2,20 @@ import json
 
 import boto3
 
-from codebase.aws import retry
+from codebase.aws import retry, AWS
 
 CLIENT = boto3.client("secretsmanager")
 
 
-class SecretsManager:
-    def __init__(self):
+class SecretsManager(AWS):
+    def __init__(self, region_name: str = None):
+        AWS.__init__(self, region_name=region_name)
         self._client = boto3.client("secretsmanager")
 
     def get_client(self):
         return self._client
 
-    @retry
+    @retry()
     def get_secrets_dict(self, secrets_name: str) -> dict:
         """
         Gets a dictionary object containing secrets from an AWS Secrets resource.

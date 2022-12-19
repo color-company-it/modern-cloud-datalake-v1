@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 from typing import Callable
@@ -25,7 +26,7 @@ def retry(func: Callable) -> Callable:
             if response.status_code == 200:
                 return response
             else:
-                sleep_time = backoff_factor * (2**i)
+                sleep_time = backoff_factor * (2 ** i)
                 sys.stdout.write(
                     str(
                         f"Boto3 call returned status code: {response.status_code} "
@@ -41,7 +42,15 @@ def retry(func: Callable) -> Callable:
 
 class AWS:
     def __init__(self, region_name: str):
-        self._session = boto3.Session(region_name=region_name)
+        self.region_name = self.set_region(region_name=region_name)
+        os.environ["aws-region"] = self.region_name
+        self._session = boto3.Session(region_name=self.region_name)
+
+    @staticmethod
+    def set_region(region_name: str = None):
+        if region_name:
+            return "eu-west-1"
+        return region_name
 
     def get_session(self):
         return self._session

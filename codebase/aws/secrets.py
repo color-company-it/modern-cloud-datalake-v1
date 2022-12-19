@@ -2,15 +2,14 @@ import json
 
 import boto3
 
-from codebase.aws import AWS, retry
+from codebase.aws import retry
 
 CLIENT = boto3.client("secretsmanager")
 
 
-class SecretsManager(AWS):
-    def __init__(self, region_name: str):
-        super().__init__(region_name)
-        self._client = self._session.client("secretsmanager")
+class SecretsManager:
+    def __init__(self):
+        self._client = boto3.client("secretsmanager")
 
     def get_client(self):
         return self._client

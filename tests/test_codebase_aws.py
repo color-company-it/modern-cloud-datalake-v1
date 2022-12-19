@@ -13,45 +13,16 @@ CLIENT = boto3.client("secretsmanager")
 
 
 class TestRetryDecorator(unittest.TestCase):
-    @patch("time.sleep")
-    def test_retry_successful(self, mock_sleep):
-        # Set up test data
-        func = Mock()
-        func.return_value.status_code = 200
-
-        # Call the retry decorator
-        wrapped_func = retry(func)
-
-        # Call the wrapped function
-        response = wrapped_func()
-
-        # Assert that the function was only called once
-        self.assertEqual(func.call_count, 1)
-
-        # Assert that the response has a status code of 200
-        self.assertEqual(response.status_code, 200)
-
-        # Assert that the sleep method was not called
-        self.assertEqual(mock_sleep.call_count, 0)
-
-    @patch("time.sleep")
-    def test_retry_failed(self, mock_sleep):
-        # Set up test data
-        func = Mock()
-        func.return_value.status_code = 500
-
-        # Call the retry decorator
-        wrapped_func = retry(func)
-
-        # Call the wrapped function
-        response = wrapped_func()
-
-        # Assert that the response has a status code of 500
-        self.assertEqual(response.status_code, 500)
-
-        # Assert that the sleep method was called 3 times
-        # (once for each iteration of the retry loop)
-        self.assertEqual(mock_sleep.call_count, 3)
+    def test_retry(self):
+        @retry(max_retries=1, backoff_factor=1)
+        def test_function():
+            nonlocal call_count
+            call_count += 1
+            raise Exception
+        call_count = 0
+        with self.assertRaises(Exception):
+            test_function()
+        self.assertEqual(call_count, 2)
 
 
 class TestSecretsManager(unittest.TestCase):

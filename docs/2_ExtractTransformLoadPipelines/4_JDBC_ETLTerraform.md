@@ -27,3 +27,14 @@ Finally, the code creates an S3 bucket for scripts and uploads two groups of fil
 spark/jdbc" scripts. The files to be uploaded are listed in the local variables docker-scripts and spark-jdbc-scripts,
 respectively.
 
+# 4.2 Running Docker Containers
+
+To create a shell script for a docker entrypoint that takes container environment variables and runs a PySpark script
+that uses argparse, you can use the following approach:
+
+1. Define the PySpark script that uses argparse and processes the required arguments. This script should use the
+   argparse module to define and parse the required arguments, and then use those arguments to perform the necessary
+   operations in PySpark.
+2. In the shell script, use the docker command to run the PySpark script inside a Docker container, passing the required
+   arguments and environment variables as necessary. You can use the -e flag to pass environment variables to the Docker
+   container, and the -v flag to mount the local directory containing the PySpark script inside the container.

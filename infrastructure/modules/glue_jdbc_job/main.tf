@@ -13,7 +13,7 @@ resource "aws_glue_job" "glue-jdbc-job" {
   command {
     name            = "glueetl"
     script_location = var.script-location
-    python_version = "3"
+    python_version  = "3"
   }
 
   default_arguments = {

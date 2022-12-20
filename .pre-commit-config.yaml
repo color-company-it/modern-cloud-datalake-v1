@@ -12,3 +12,12 @@ repos:
         entry: bash setup-whl.sh
         language: system
         pass_filenames: false
+      - id: terraform-fmt
+        name: terraform-fmt
+        entry: terraform fmt -recursive
+        language: system
+        pass_filenames: false
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black

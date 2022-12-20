@@ -24,12 +24,12 @@ resource "aws_iam_policy" "glue-job-policy" {
   description = "Policy for JDBC ${var.etl-stage} ${var.sdlc-stage} Glue job"
 
   policy = templatefile("${path.module}/iam_role.json", {
-    "region-name": var.region-name,
-    "account-id": var.account-id,
-    "script-s3-bucket-name": var.script-s3-bucket-name,
-    "etl-s3-bucket-name": var.etl-s3-bucket-name,
-     "codebase-s3-bucket-name": var.codebase-s3-bucket-name,
-    "etl-stage": var.etl-stage
+    "region-name" : var.region-name,
+    "account-id" : var.account-id,
+    "script-s3-bucket-name" : var.script-s3-bucket-name,
+    "etl-s3-bucket-name" : var.etl-s3-bucket-name,
+    "codebase-s3-bucket-name" : var.codebase-s3-bucket-name,
+    "etl-stage" : var.etl-stage
   })
 }
 

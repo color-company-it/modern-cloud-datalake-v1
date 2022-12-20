@@ -1,6 +1,6 @@
 variable "region-name" {
-  type        = string
-  default     = "eu-west-1"
+  type    = string
+  default = "eu-west-1"
 }
 
 variable "business-name" {

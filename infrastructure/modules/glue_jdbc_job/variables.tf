@@ -40,6 +40,6 @@ variable "job-language" {
 }
 
 variable "codebase" {
-  type = string
+  type        = string
   description = "The S3 ARN for the codebase.zip file for the glue job to use"
 }

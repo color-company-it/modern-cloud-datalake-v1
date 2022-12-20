@@ -1,7 +1,12 @@
+variable "region-name" {
+  type    = string
+  default = "eu-west-1"
+}
+
 variable "business-name" {
   type        = string
   description = "The name of the business/group/department that is deploying this repository to AWS."
-  default     = "color-it"
+  default     = "dirkscgm"
 }
 
 variable "sdlc-stage" {

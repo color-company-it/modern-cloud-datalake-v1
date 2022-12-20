@@ -39,7 +39,7 @@ variable "job-language" {
   default     = "python"
 }
 
-variable "language-modules" {
+variable "codebase" {
   type        = string
-  description = "A command separated list of language modules or S3 URI archived files"
+  description = "The S3 ARN for the codebase.zip file for the glue job to use"
 }

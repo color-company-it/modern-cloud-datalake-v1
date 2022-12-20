@@ -42,8 +42,8 @@ def generate_sql_pushdown_query(extract_table: str, sql_where_condition: str) ->
     """
     Generate a SQL Pushdown query using a FROM clause, WHERE condition, and table name.
 
-    :param extract_table: The namespace of the table being extracted, such as
-                          db_name.db_schema.db_table or whatever other namespace is
+    :param extract_table: The _namespace of the table being extracted, such as
+                          db_name.db_schema.db_table or whatever other _namespace is
                           applicable.
     :param sql_where_condition: SQL WHERE condition to be used in the query
     :returns: A string representing the generated SQL Pushdown query
@@ -79,7 +79,7 @@ def parse_extract_table(extract_table: str) -> dict:
     if len(parts) == 1:
         return {"db_name": None, "db_schema": None, "db_table": parts[0]}
 
-    raise ValueError("The provided namespace is invalid when parsing extract table.")
+    raise ValueError("The provided _namespace is invalid when parsing extract table.")
 
 
 def add_jdbc_extract_time_field(data_frame: DataFrame) -> DataFrame:

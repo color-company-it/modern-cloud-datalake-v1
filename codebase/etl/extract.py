@@ -26,7 +26,7 @@ def generate_sql_where_condition(
     """
 
     if extract_type == "FE":
-        return ""
+        return "".strip()
     if extract_type == "PE":
         return f"""
     WHERE {hwm_col_name} > {lwm_value} and {hwm_col_name} <= {hwm_value}
@@ -48,18 +48,19 @@ def generate_sql_pushdown_query(extract_table: str, sql_where_condition: str) ->
     :param sql_where_condition: SQL WHERE condition to be used in the query
     :returns: A string representing the generated SQL Pushdown query
     """
-    return f"""
-    (SELECT * FROM {extract_table} {sql_where_condition}) {extract_table.split('.')[-1]}_alias
-    """.strip()
+    alias = (
+        extract_table.split(".")[-1].replace('"', "").replace("'", "").replace("`", "")
+    )
+    return f"(SELECT * FROM {extract_table} {sql_where_condition.strip()}) {alias}_alias".strip()
 
 
-def parse_extract_table(extract_table: str) -> dict:
+def parse_extract_table(extract_table: str) -> tuple:
     """
     Parse the extract_table variable and return a dictionary containing the database name, schema, and table name.
 
     :param extract_table: A string representing the database, schema, and table to be extracted in the format of
     "<db_name>.<db_schema>.<db_table>" or "<db_name>.<db_table>" or "<db_table>"
-    :returns: A dictionary containing the database name, schema, and table name
+    :returns: A tuple containing the database name, schema, and table name
     :raises ValueError: If the extract_table variable does not have one of the three formats mentioned above
     """
     parts = extract_table.split(".")
@@ -69,15 +70,15 @@ def parse_extract_table(extract_table: str) -> dict:
 
     # full_namespace
     if len(parts) == 3:
-        return {"db_name": parts[0], "db_schema": parts[1], "db_table": parts[2]}
+        return parts[0], parts[1], parts[2]
 
     # partial_namespace
     if len(parts) == 2:
-        return {"db_name": parts[0], "db_schema": None, "db_table": parts[1]}
+        return parts[0], None, parts[1]
 
     # no_namespace
     if len(parts) == 1:
-        return {"db_name": None, "db_schema": None, "db_table": parts[0]}
+        return None, None, parts[0]
 
     raise ValueError("The provided _namespace is invalid when parsing extract table.")
 
@@ -89,9 +90,8 @@ def add_jdbc_extract_time_field(data_frame: DataFrame) -> DataFrame:
 
 def jdbc_read(
     spark: SparkSession,
-    jdbc_url: str,
+    jdbc_params: dict,
     sql_pushdown_query: str,
-    driver: str,
     partition_column: str,
     lower_bound: int,
     upper_bound: int,
@@ -104,18 +104,14 @@ def jdbc_read(
     as specifying a fetch size and partitioning options.
     """
     data_frame = (
-        spark.read.format("jdbc")
-        .option("url", jdbc_url)
-        .option("driver", driver)
-        .option("dbtable", sql_pushdown_query)
-        .option("partitionColumn", partition_column)
+        spark.read.option("partitionColumn", partition_column)
         .option("lowerBound", lower_bound)
         .option("upperBound", upper_bound)
         .option("numPartitions", num_partitions)
+        .option("fetchsize", fetchsize)
+        .jdbc(table=sql_pushdown_query.strip(), **jdbc_params)
     )
-    if fetchsize:
-        data_frame = data_frame.option("fetchsize", fetchsize)
-    return data_frame.load()
+    return data_frame
 
 
 def get_hwm_and_lwm_values(data_frame: DataFrame, field: str) -> tuple:

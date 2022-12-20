@@ -1,49 +1,49 @@
 # 2.1 JDBC Extract
 
-Connecting to the data sources and retrieving the pertinent data are the responsibilities of this component.
-The extraction module may retrieve the data and extract it in the required format using a number of methods, including
-SQL queries, API calls, or custom scripts.
+PySpark JDBC Extract Job
+The PySpark JDBC Extract Job is a script that retrieves data from a JDBC data source by connecting to a JDBC URL and
+executing a SQL query. The job can be customized with options such as the type of extract, the database engine, the
+table to extract from, and the database host and port. The job can also be configured to repartition the extracted data
+and write the results to a specified S3 URI.
 
-The PySpark JDBC Extract Job is a script that extracts data from a JDBC source by connecting to a JDBC URL and reading
-data from a table using a SQL pushdown query. The job can be parameterized with options that allow customization of the
-extract process, such as specifying the type of extract, the database engine, the extract table, and the database host
-and port. Additionally, the job can be configured to repartition the extracted dataframe and write the results to a
-specified S3 URI.
+To use the PySpark JDBC Extract Job, you need to specify the following command-line arguments:
 
-To use the PySpark JDBC Extract Job, you will need to specify the following command-line arguments:
+| Flag                    | Description                                                                                  |
+|-------------------------|----------------------------------------------------------------------------------------------|
+| --extract_type          | The type of extract to be performed                                                          |
+| --engine                | The engine to connect to                                                                     |
+| --extract_table         | The table to extract data from                                                               |
+| --db_host               | The hostname of the database                                                                 |
+| --db_port               | The port of the database                                                                     |
+| --aws_secret_arn        | The Amazon Web Services (AWS) secret ARN used to authenticate the connection to the database |
+| --hwm_col_name          | The name of the high watermark column                                                        |
+| --hwm_value             | The value of the high watermark                                                              |
+| --lwm_value             | The value of the low watermark                                                               |
+| --partition_column      | The column to partition the data on                                                          |
+| --num_partitions        | The number of partitions to create                                                           |
+| --lower_bound           | The lower bound for partitioning                                                             |
+| --upper_bound           | The upper bound for partitioning                                                             |
+| --fetchsize             | The number of rows to fetch per batch                                                        |
+| --repartition_dataframe | Whether to repartition the dataframe                                                         |
+| --extract_s3_uri        | The URI of the S3 bucket to extract the data to                                              |
 
-| Flag                                | Description                                                                                          |
-|-------------------------------------|------------------------------------------------------------------------------------------------------|
-| --extract_type:                     | The type of extract to be performed (e.g. FE or PE).                                                 |
-| --engine:                           | The database engine to be used (e.g. postgres or mysql).                                             |
-| --db_host:                          | The hostname of the database server.                                                                 |
-| --db_port:                          | The port of the database server.                                                                     |
-| --db_name:                          | The name of the database to be accessed.                                                             |
-| --db_user:                          | The username for connecting to the database.                                                         |
-| --db_password:                      | The password for the provided username.                                                              |
-| --extract_table:                    | The table to be extracted. This argument can be specified in the form schema.table                   |
-| --extract_s3_uri:                   | The S3 URI to which the extracted data should be written.                                            |
-| --repartition_dataframe (optional): | Whether or not to repartition the extracted dataframe. This argument should be set to True or False. |
+## Extraction Methods
 
+Data in a relational database can be extracted in several ways, including full extract, partial extract, and extract
+using upper and lower bounds.
 
+### Full Extract (FE)
 
-## Different Extraction Methods
+A full extract involves retrieving all of the data from a database. This can be useful for creating a database backup or
+analyzing all of the data in the database. However, extracting all data from a large database can be time-consuming and
+resource-intensive.
 
-Data in a relational database can be extracted in several different ways, including a full extract, partial extract, or
-extract using upperbound and lowerbound values.
+### Partial Extract (PE)
 
-#### Full Extract: FE
-
-A full extract involves extracting all of the data from a relational database. This can be useful when you want to
-create a backup of your database, or when you want to analyze all of the data in the database. However, extracting all
-of the data from a large database can be time-consuming and resource-intensive, so it's not always the best option.
-
-#### Partial Extract: PE
-
-A partial extract involves extracting only a subset of the data from a relational database. This can be useful when you
-only need to analyze a specific portion of the data, or when you want to reduce the amount of time and resources
-required to extract the data. To extract a partial dataset, you can use a WHERE clause in your SQL query to specify the
-conditions that the data must meet in order to be included in the extract.
+A partial extract involves retrieving only a subset of the data from a database. This can be useful when you only need
+to analyze a specific portion of the data or when you want to reduce the time and resources required for the extract. To
+extract a partial dataset, you can use the --hwm_col_name, --hwm_value, and --lwm_value options to specify a range of
+data based on a high and low watermark column.
 
 ### Expressing these Extract Types in SQL
 
@@ -267,3 +267,37 @@ CMD ["pyspark"]
 ```
 
 ## Implementation details and instructions for maintenance and troubleshooting
+
+### Running the pipeline on a local DOcker container
+
+One can build the docker image as such:
+
+```shell
+docker build -t jdbc_etl -f scripts/docker/base_etl_jdbc_1.Dockerfile .
+```
+
+And can execute an extract job by submitting params to the image:
+
+```shell
+docker run \
+  --rm=true \
+  -v ~/.aws:/root/.aws \
+  -e EDL_TYPE=extract \
+  -e SCRIPT_NAME=pipeline_extract_dev_jdbc_1.py \
+  -e ENGINE=postgres \
+  -e EXTRACT_TYPE=FE \
+  -e EXTRACT_TABLE=\"database\".\"public\".\"accounts\" \
+  -e DB_HOST=ip/alias \
+  -e DB_PORT=5432 \
+  -e AWS_SECRET_ARN=arn:aws:secretsmanager:eu-west-1:114349804536:secret:postgres/mock_db-3DNvLo \
+  -e HWM_COL_NAME=customerid \
+  -e HWM_VALUE=1000 \
+  -e LWM_VALUE=1 \
+  -e PARTITION_COLUMN=customerid \
+  -e NUM_PARTITIONS=1 \
+  -e LOWER_BOUND=1 \
+  -e UPPER_BOUND=5000 \
+  -e REPARTITION_DATAFRAME=true \
+  -e EXTRACT_S3_URI=s3a://bucket/business/extract/table/ \
+  jdbc_etl
+```

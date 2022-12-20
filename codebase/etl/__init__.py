@@ -2,13 +2,11 @@ import math
 
 from pyspark.sql import SparkSession, DataFrame
 
-JDBC_ENGINES: list = ["postgres", "mysql", "oracle", "mssql"]
+JDBC_ENGINES: list = ["postgres", "mysql"]
 
 JDBC_DRIVERS: dict = {
     "postgres": "org.postgresql.Driver",
     "mysql": "com.mysql.cj.jdbc.Driver",
-    "oracle": "oracle.jdbc.OracleDriver",
-    "mssql": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
 }
 
 
@@ -30,13 +28,11 @@ def get_jdbc_url(engine: str, jdbc_params: dict) -> str:
     """
     if engine in JDBC_ENGINES:
         if engine == "postgres":
-            return f"jdbc:postgresql://{jdbc_params['host']}:{jdbc_params['port']}/{jdbc_params['database']}"
+            # Sanitise the database provided for postgresql
+            database = jdbc_params["database"].strip('"')
+            return f'jdbc:postgresql://{jdbc_params["host"]}:{jdbc_params["port"]}/{database}'
         if engine == "mysql":
             return f"jdbc:mysql://{jdbc_params['host']}:{jdbc_params['port']}/{jdbc_params['database']}"
-        if engine == "oracle":
-            return f"jdbc:oracle:thin:{jdbc_params['user']}/{jdbc_params['password']}@{jdbc_params['host']}:{jdbc_params['port']}:{jdbc_params['database']}"
-        if engine == "mssql":
-            return f"jdbc:sqlserver://{jdbc_params['host']}:{jdbc_params['port']};database={jdbc_params['database']}"
     raise ValueError(
         f"The provided engine: {engine} is not supported. " f"{JDBC_ENGINES}"
     )

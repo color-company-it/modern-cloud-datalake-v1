@@ -13,7 +13,7 @@ module "codebase-archive" {
   source_dir  = "${path.root}/../codebase/"
 }
 
-# test_codebase lambda layer
+# codebase lambda layer
 locals {
   codebase-lambda-layer-local-dir = "${path.root}/../codebase_layer"
 }
@@ -25,6 +25,13 @@ module "codebase-layer-archive" {
   bucket_name = aws_s3_bucket.codebase-bucket.bucket
   output_path = "${path.root}/../codebase_layer.zip"
   source_dir  = local.codebase-lambda-layer-local-dir
+}
+
+# codebase.whl
+resource "aws_s3_bucket_object" "codebase-whl" {
+  bucket = aws_s3_bucket.codebase-bucket.bucket
+  key    = "codebase/${local.codebase-whl.name}"
+  source = local.codebase-whl.path
 }
 
 # configuration     ----------------------------------------------------------------------------------------------------

@@ -13,14 +13,16 @@ resource "aws_glue_job" "glue-jdbc-job" {
   command {
     name            = "glueetl"
     script_location = var.script-location
+    python_version  = "3"
   }
 
   default_arguments = {
     # Args for Hudi 0.12.0
-    "--datalake-formats" : "hudi"
-    "--conf" : "spark.serializer=org.apache.spark.serializer.KryoSerializer --conf spark.sql.hive.convertMetastoreParquet=false"
-    "--job-language"              = var.job-language
-    "--additional-python-modules" = var.language-modules
+    #"--datalake-formats" : "hudi"
+    #"--conf" : "spark.serializer=org.apache.spark.serializer.KryoSerializer --conf spark.sql.hive.convertMetastoreParquet=false"
+    "--additional-python-modules" = var.codebase
+    "--enable-continuous-cloudwatch-log" : "true",
+    "--enable-metrics" : "true"
   }
 
   connections = var.connections

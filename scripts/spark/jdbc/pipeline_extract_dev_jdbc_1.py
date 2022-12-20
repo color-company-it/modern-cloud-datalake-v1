@@ -80,86 +80,92 @@ def main():
 
 if __name__ == "__main__":
     # Set up command-line arguments
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
+    _parser = argparse.ArgumentParser()
+    _parser.add_argument(
         "--extract_type",
         type=str,
         help="The type of extract to perform (e.g. FE, PE)",
     )
-    parser.add_argument(
+    _parser.add_argument(
         "--engine", type=str, help="The database engine to use (e.g. postgres, mysql)"
     )
-    parser.add_argument(
+    _parser.add_argument(
         "--extract_table",
         type=str,
-        help="The table namespace used in the SQL from clause (e.g. db.schema.table_name)",
+        help="The table _namespace used in the SQL from clause (e.g. db.schema.table_name)",
     )
-    parser.add_argument(
+    _parser.add_argument(
         "--db_host", type=str, help="The hostname of the database server"
     )
-    parser.add_argument("--db_port", type=str, help="The port of the database server")
-    parser.add_argument(
+    _parser.add_argument("--db_port", type=str, help="The port of the database server")
+    _parser.add_argument(
         "--aws_secret_arn",
         type=str,
         help="The ARN of the AWS secret containing the database credentials",
     )
-    parser.add_argument("--db_name", type=str, help="The name of the database")
-    parser.add_argument(
+    _parser.add_argument("--db_name", type=str, help="The name of the database")
+    _parser.add_argument(
         "--db_user",
         type=str,
         help="The username to use when connecting to the database",
     )
-    parser.add_argument(
+    _parser.add_argument(
         "--db_password",
         type=str,
         help="The password to use when connecting to the database",
     )
-    parser.add_argument(
+    _parser.add_argument(
         "--hwm_col_name",
         type=str,
         help="The name of the column to use as the high watermark",
     )
-    parser.add_argument("--hwm_value", type=str, help="The value of the high watermark")
-    parser.add_argument("--lwm_value", type=str, help="The value of the low watermark")
-    parser.add_argument(
+    _parser.add_argument("--hwm_value", type=str, help="The value of the high watermark")
+    _parser.add_argument("--lwm_value", type=str, help="The value of the low watermark")
+    _parser.add_argument("--partition_column", type=str, help="The column to partition on during extract")
+    _parser.add_argument("--num_partitions", type=str)
+    _parser.add_argument("--upper_bound", type=str, help="")
+    _parser.add_argument("--lower_bound", type=str, help="")
+    _parser.add_argument("--fetchsize", type=str)
+    _parser.add_argument(
         "--repartition_dataframe",
         type=bool,
         help="Whether to repartition the dataframe",
     )
-    parser.add_argument(
+    _parser.add_argument(
         "--extract_s3_uri", type=str, help="The S3 URI to write the extracted data to"
     )
 
     # Parse the command-line arguments
-    args = parser.parse_args()
-    _extract_type = args["extract_type"]
-    _engine = args["engine"]
-    _extract_table = args["extract_table"]
+    _namespace, _ = _parser.parse_known_args()
+    _extract_type = _namespace.extract_type
+    _engine = _namespace.engine
+    _extract_table = _namespace.extract_table
 
     _db_name, _db_schema, _db_table = parse_extract_table(extract_table=_extract_table)
-    _db_host = args["db_host"]
-    _db_port = args["db_port"]
+    _db_host = _namespace.db_host
+    _db_port = _namespace.db_port
     _db_user, _db_password = SECRETS.get_secrets_dict(
-        secrets_name=args["aws_secret_arn"]
+        secrets_name=_namespace.aws_secret_arn
     )
 
-    _hwm_col_name = args["hwm_col_name"]
-    _hwm_value = args["hwm_value"]
-    _lwm_value = args["lwm_value"]
+    _hwm_col_name = _namespace.hwm_col_name
+    _hwm_value = _namespace.hwm_value
+    _lwm_value = _namespace.lwm_value
 
-    _partition_column = args["partition_column"]
-    _num_partitions = args["num_partitions"]
+    _partition_column = _namespace.partition_column
+    _num_partitions = _namespace.num_partitions
 
-    _lower_bound = args["lower_bound"]
-    _upper_bound = args["upper_bound"]
-    _fetchsize = args["fetchsize"]
+    _lower_bound = _namespace.lower_bound
+    _upper_bound = _namespace.upper_bound
+    _fetchsize = _namespace.fetchsize
 
-    _repartition_dataframe = args["repartition_dataframe"]
-    _extract_s3_uri = args["extract_s3_uri"]
+    _repartition_dataframe = _namespace.repartition_dataframe
+    _extract_s3_uri = _namespace.extract_s3_uri
 
     LOGGER.info("Starting PySpark Job.")
     try:
         main()
     except Exception as err:
         LOGGER.info(f"PySpark Job Failed with the error:\n{err}")
+        raise err
     LOGGER.info("PySpark Job Succeeded.")

@@ -21,26 +21,16 @@ EOF
 # IAM policy for the Glue job
 resource "aws_iam_policy" "glue-job-policy" {
   name        = "${var.business-name}-${var.etl-stage}-${var.sdlc-stage}-glue-job-policy"
-  description = "Policy for JDBC ETL Glue job"
+  description = "Policy for JDBC ${var.etl-stage} ${var.sdlc-stage} Glue job"
 
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject"
-      ],
-      "Effect": "Allow",
-      "Resource": [
-        "arn:aws:s3:::${var.script-s3-bucket-arn}/*",
-        "arn:aws:s3:::${var.etl-s3-bucket-arn}/*/${var.etl-stage}/*"
-      ]
-    }
-  ]
-}
-EOF
+  policy = templatefile("${path.module}/iam_role.json", {
+    "region-name" : var.region-name,
+    "account-id" : var.account-id,
+    "script-s3-bucket-name" : var.script-s3-bucket-name,
+    "etl-s3-bucket-name" : var.etl-s3-bucket-name,
+    "codebase-s3-bucket-name" : var.codebase-s3-bucket-name,
+    "etl-stage" : var.etl-stage
+  })
 }
 
 # Attach the policy to the role

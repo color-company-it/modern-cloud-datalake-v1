@@ -1,9 +1,13 @@
 #!/bin/bash
 
 # Determine the pipeline type
-if [ $EDL_TYPE == "extract" ]; then
+if [ "$EDL_TYPE" == "extract" ]; then
   echo "Running Extract Pipeline"
-  python3 "${SCRIPT_NAME}" \
+  if [ -z "$FETCHSIZE" ]; then
+    FETCHSIZE="100"
+  fi
+
+  spark-submit "${SCRIPT_NAME}" \
     --extract_type "${EXTRACT_TYPE}" \
     --engine "${ENGINE}" \
     --extract_table "${EXTRACT_TABLE}" \
@@ -20,7 +24,7 @@ if [ $EDL_TYPE == "extract" ]; then
     --fetchsize "${FETCHSIZE}" \
     --repartition_dataframe "${REPARTITION_DATAFRAME}" \
     --extract_s3_uri "${EXTRACT_S3_URI}" \
-    --aws_region "$AWS_REGION"
+    --jars ./jars/mysql-connector-j-8.0.31.jar,./jars/postgresql-42.5.1.jar
 elif [ $EDL_TYPE == "transform" ]; then
   echo "Running Transform Pipeline"
 elif [ $EDL_TYPE == "load" ]; then

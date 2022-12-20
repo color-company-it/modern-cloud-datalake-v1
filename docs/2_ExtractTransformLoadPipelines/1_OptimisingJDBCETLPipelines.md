@@ -82,3 +82,23 @@ the database, which can improve the performance of the query.
 On the other hand, the hwm value and lwm value refer to the maximum and minimum values of a field in a PySpark data
 frame. These values can be calculated using the max() and min() functions. The hwm value and lwm value do not
 necessarily have anything to do with the upper bound and lower bound in a PySpark JDBC query.
+
+### In order to calculate the distribution of high watermark values as partitions for a Spark job extracting data from a relational database, you will need to follow these steps:
+
+1. Determine the criteria for partitioning the data: You will need to decide on the columns or criteria that you want to
+   use to partition the data. This could be based on a specific column in the table, such as a timestamp or an ID, or a
+   combination of columns.
+2. Determine the high watermark values: The high watermark values are the maximum values of the chosen partitioning
+   criteria that have been processed in the previous runs of the job. You will need to determine these values in order
+   to ensure that the current run of the job is processing data that has not been processed before.
+3. Calculate the number of partitions: Based on the high watermark values and the size of the data that you want to
+   process, you will need to calculate the number of partitions that are required. This can be done by dividing the
+   total size of the data by the desired size of each partition.
+4. Assign the high watermark values to the partitions: Once you have determined the number of partitions, you will need
+   to assign the high watermark values to the partitions. This can be done by dividing the range of values for the
+   partitioning criteria by the number of partitions, and then assigning the high watermark values to the appropriate
+   partitions based on the resulting range.
+5. Extract the data using the partitions: Finally, you can use the calculated partitions and high watermark values to
+   extract the data from the database using Spark. This can be done using the partitionBy function in the Spark
+   DataFrame API, which allows you to specify the partitioning criteria and the high watermark values for each
+   partition.

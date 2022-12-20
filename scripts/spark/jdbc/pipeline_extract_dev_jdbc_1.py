@@ -23,6 +23,7 @@ from codebase.etl.extract import (
     add_jdbc_extract_time_field,
     parse_extract_table,
 )
+from codebase.etl import JDBC_DRIVERS
 
 SC = SparkContext()
 SPARK = SparkSession.builder.appName("ExtractJDBCSource").getOrCreate()
@@ -47,6 +48,18 @@ def main():
         },
     )
 
+    jdbc_params = {
+        "url": jdbc_url,
+        "properties": {
+            "user": _db_user,
+            "password": _db_password,
+            "driver": JDBC_DRIVERS[_engine],
+            "encrypt": "true",
+            "trustServerCertificate": "true",
+            "applicationIntent": "ReadOnly",
+        },
+    }
+
     LOGGER.info("Construct SQL Where condition")
     sql_where_condition = generate_sql_where_condition(
         hwm_col_name=_hwm_col_name,
@@ -56,17 +69,25 @@ def main():
     )
     LOGGER.info(f"sql_where_condition: {sql_where_condition}")
 
-    LOGGER.info("Construct SQ Pushdown Query")
+    LOGGER.info("Construct SQL Pushdown Query")
     sql_pushdown_query = generate_sql_pushdown_query(
         sql_where_condition=sql_where_condition, extract_table=_extract_table
     )
     LOGGER.info(f"sql_pushdown_query: {sql_pushdown_query}")
 
     data_frame: DataFrame = jdbc_read(
-        jdbc_url=jdbc_url, sql_pushdown_query=sql_pushdown_query
+        spark=SPARK,
+        jdbc_params=jdbc_params,
+        sql_pushdown_query=sql_pushdown_query,
+        partition_column=_partition_column,
+        lower_bound=_lower_bound,
+        upper_bound=_upper_bound,
+        num_partitions=_num_partitions,
+        fetchsize=_fetchsize,
     )
     data_frame = add_jdbc_extract_time_field(data_frame=data_frame)
-    LOGGER.info(f"DataFrame Schema: {data_frame.printSchema()}")
+    LOGGER.info(f"DataFrame Schema:")
+    data_frame.printSchema()
 
     if _repartition_dataframe:
         data_frame, partition_num = repartition_dataframe(
@@ -81,6 +102,10 @@ def main():
 if __name__ == "__main__":
     # Set up command-line arguments
     _parser = argparse.ArgumentParser()
+    _parser.add_argument("--JOB_ID", required=False)
+    _parser.add_argument("--JOB_RUN_ID", required=False)
+    _parser.add_argument("--JOB_NAME", required=False)
+
     _parser.add_argument(
         "--extract_type",
         type=str,
@@ -119,13 +144,17 @@ if __name__ == "__main__":
         type=str,
         help="The name of the column to use as the high watermark",
     )
-    _parser.add_argument("--hwm_value", type=str, help="The value of the high watermark")
+    _parser.add_argument(
+        "--hwm_value", type=str, help="The value of the high watermark"
+    )
     _parser.add_argument("--lwm_value", type=str, help="The value of the low watermark")
-    _parser.add_argument("--partition_column", type=str, help="The column to partition on during extract")
+    _parser.add_argument(
+        "--partition_column", type=str, help="The column to partition on during extract"
+    )
     _parser.add_argument("--num_partitions", type=str)
     _parser.add_argument("--upper_bound", type=str, help="")
     _parser.add_argument("--lower_bound", type=str, help="")
-    _parser.add_argument("--fetchsize", type=str)
+    _parser.add_argument("--fetchsize", type=str, default=100)
     _parser.add_argument(
         "--repartition_dataframe",
         type=bool,
@@ -144,9 +173,8 @@ if __name__ == "__main__":
     _db_name, _db_schema, _db_table = parse_extract_table(extract_table=_extract_table)
     _db_host = _namespace.db_host
     _db_port = _namespace.db_port
-    _db_user, _db_password = SECRETS.get_secrets_dict(
-        secrets_name=_namespace.aws_secret_arn
-    )
+    _db_secrets = SECRETS.get_secrets_dict(secrets_name=_namespace.aws_secret_arn)
+    _db_user, _db_password = _db_secrets["db_user"], _db_secrets["db_password"]
 
     _hwm_col_name = _namespace.hwm_col_name
     _hwm_value = _namespace.hwm_value

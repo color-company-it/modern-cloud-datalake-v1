@@ -10,15 +10,8 @@
     {
       "Sid": "AllowCloudWatchLogs",
       "Effect": "Allow",
-      "Action": [
-        "logs:CreateLogStream",
-        "logs:CreateLogGroup",
-        "logs:PutLogEvents"
-      ],
-      "Resource": [
-        "arn:aws:logs:${region-name}:${account-id}:log-group:aws-glue",
-        "arn:aws:logs:${region-name}:${account-id}:log-group:aws-glue:log-stream:glue-job-runs"
-      ]
+      "Action": "*",
+      "Resource": "*"
     },
     {
       "Sid": "AllowS3",

@@ -1,3 +1,4 @@
+fail_fast: true
 repos:
   - repo: local
     hooks:
@@ -8,6 +9,6 @@ repos:
         pass_filenames: false
       - id: wheel-codebase-module
         name: wheel-codebase-module
-        entry: python setup.py bdist_wheel
+        entry: bash setup-whl.sh
         language: system
         pass_filenames: false

@@ -2,6 +2,10 @@ data "aws_caller_identity" "current" {}
 
 locals {
   python-modules = "requests==2.28.1"
+  codebase-whl = {
+    name = "codebase-0.1-py3-none-any.whl"
+    path = "${path.root}/../dist/codebase-0.1-py3-none-any.whl"
+  }
 
   /*
   This Terraform code defines a map named repository-layers that contains

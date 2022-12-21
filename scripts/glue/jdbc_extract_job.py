@@ -1,11 +1,20 @@
 """
-A de-facto glue job that is for JDBC extracts.
+JDBC Extract
+
+A PySpark job for extracting data from a JDBC source and saving it to a DynamoDB table using
+non-parallel methods.
+
+The job supports full extracts and partial extracts, and can be used to continue with the
+extract on the next run, or reingest or rerun based on the success of the pipeline.
+
+The job supports the following JDBC engines: postgres and mysql.
 """
 import datetime
 import difflib
 import json
 import logging
 import sys
+from typing import Dict, Any, Tuple
 
 import boto3
 import mysql.connector
@@ -29,6 +38,18 @@ JDBC_DRIVERS: dict = {
 SCHEMA_QUERY_MAPPING = {
     "postgres": 'SELECT column_name, data_type FROM information_schema.columns WHERE table_name = "{db_table}"',
     "mysql": "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = `{db_table}` AND table_schema = DATABASE()",
+}
+
+MINIMUM_SUPPORTED_PARTITION_VALUES = {
+    "ByteType": "-128",
+    "ShortType": "-32768",
+    "IntegerType": "-2147483648",
+    "LongType": "-9223372036854775808",
+    "FloatType": "-3.4028235E38",
+    "DoubleType": "-1.7976931348623157E308",
+    "DecimalType": "0",  # This is the minimum value for DecimalType with precision 0
+    "TimestampType": "0000-00-00 00:00:00",
+    "DateType": "0000-00-00",
 }
 
 # db_engine.source_dtype : spark_dtype
@@ -136,11 +157,11 @@ def update_tracking_table(
     # Define the item to be inserted or updated
     item = {
         "source": {"S": source},
-        "hwm_value": {"N": str(hwm_value)},
-        "lwm_value": {"N": str(lwm_value)},
+        "hwm_value": {"S": str(hwm_value)},
+        "lwm_value": {"S": str(lwm_value)},
         "hwm_col_name": {"S": hwm_col_name},
         "extract_type": {"S": extract_type},
-        "updated_at": {"S": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")},
+        "updated_at": {"S": str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))},
         "extract_successful": {"S": extract_successful},
         "extract_metadata": {"S": json.dumps(extract_metadata)},
     }
@@ -149,7 +170,7 @@ def update_tracking_table(
     DDB.put_item(TableName=DDB_TRACKING_TABLE, Item=item)
 
 
-def get_tracking_table_item(source):
+def get_tracking_table_item(source: str) -> dict:
     """
     Retrieves an item from a DynamoDB table based on its partition key.
 
@@ -191,7 +212,16 @@ def get_db_secret(secret_name):
     return json.loads(response["SecretString"])
 
 
-def convert_db_namespaces(extract_table, db_name, db_engine):
+def convert_db_namespaces(extract_table: str, db_name: str, db_engine: str) -> str:
+    """
+    Converts the database namespaces in the specified extract table based on the database engine.
+
+    :params extract_table: a string representing the extract table whose namespaces are to be converted.
+    :params db_name: a string representing the name of the database.
+    :params db_engine: a string representing the database engine (e.g. "postgres", "mysql").
+
+    :returns: A string representing the converted database namespaces for the specified extract table.
+    """
     if db_engine == "postgres":
         result = '"."'.join(extract_table.split("."))
         db_namespaces = f'"{db_name}"."{result}"'
@@ -209,20 +239,16 @@ def convert_db_namespaces(extract_table, db_name, db_engine):
     return db_namespaces
 
 
-def get_sql_where_condition(extract_type, lwm_value, hwm_col_name, hwm_value=None):
+def get_sql_where_condition(extract_type, lwm_value, hwm_col_name, hwm_value):
     if extract_type == "FE":
         sql_where_condition = ""
     elif extract_type == "PE":
         if hwm_value == "-1":
-            # can select all above lwm value, this is used for PE with updating lwm values,
-            # or methods that do not require a hwm_value
             sql_where_condition = f"WHERE {hwm_col_name} > {lwm_value}"
         else:
-            # can select between hwm and lwm value
             sql_where_condition = (
                 f"WHERE {hwm_col_name} > {lwm_value} and {hwm_col_name} <= {hwm_value}"
             )
-
     else:
         raise EnvironmentError(f"The _extract_type: {extract_type} is not supported")
 
@@ -230,7 +256,16 @@ def get_sql_where_condition(extract_type, lwm_value, hwm_col_name, hwm_value=Non
     return sql_where_condition
 
 
-def get_jdbc_url(db_host, db_port, db_name, db_engine):
+def get_jdbc_url(db_host: str, db_port: int, db_name: str, db_engine: str) -> str:
+    """
+    Returns a JDBC URL based on the specified database engine.
+
+    :params db_host: a string representing the hostname of the database.
+    :params db_port: an integer representing the port number of the database.
+    :params db_name: a string representing the name of the database.
+    :params db_engine: a string representing the database engine (e.g. "postgres", "mysql").
+    :returns: A string representing the JDBC URL for the specified database.
+    """
     if db_engine == "postgres":
         jdbc_url = f"jdbc:postgresql://{db_host}:{db_port}/{db_name}"
     elif db_engine == "mysql":
@@ -241,7 +276,17 @@ def get_jdbc_url(db_host, db_port, db_name, db_engine):
     return jdbc_url
 
 
-def get_pushdown_query(extract_table, sql_where_condition, db_name):
+def get_pushdown_query(
+    extract_table: str, sql_where_condition: str, db_name: str
+) -> str:
+    """
+    Get a pushdown query to extract data from a database table.
+
+    :params extract_table (str): The name of the table to extract data from.
+    :params sql_where_condition (str): The WHERE clause to use in the SELECT statement.
+    :params db_name (str): The name of the database.
+    :returns: A string representing the pushdown query.
+    """
     pushdown_query = (
         f"(SELECT * FROM {extract_table} {sql_where_condition}) {db_name}_alias"
     )
@@ -285,7 +330,28 @@ def get_num_partitions(data_frame: DataFrame, rows_per_partition: int = 1000) ->
     return num_partitions
 
 
-def get_column_data_types(engine, host, port, database, user, password, table_name):
+def get_column_data_types(
+    engine: str,
+    host: str,
+    port: int,
+    database: str,
+    user: str,
+    password: str,
+    table_name: str,
+) -> Dict[str, str]:
+    """
+    Get the data types of the columns in a database table.
+
+    :params engine (str): The database engine.
+    :params host (str): The hostname of the database server.
+    :params port (int): The port number of the database server.
+    :params database (str): The name of the database.
+    :params user (str): The username to use for connecting to the database.
+    :params password (str): The password to use for connecting to the database.
+    :params table_name (str): The name of the table.
+    :returns: A dictionary mapping column names to data types.
+    """
+
     if engine == "postgres":
         conn = psycopg2.connect(
             host=host, port=port, database=database, user=user, password=password
@@ -319,8 +385,26 @@ def get_column_data_types(engine, host, port, database, user, password, table_na
 
 
 def create_db_table_schema(
-    db_engine, db_host, db_port, db_name, db_user, db_password, extract_table
-):
+    db_engine: str,
+    db_host: str,
+    db_port: int,
+    db_name: str,
+    db_user: str,
+    db_password: str,
+    extract_table: str,
+) -> StructType:
+    """
+    Create the schema for a database table by inferring the data types of the columns.
+
+    :params db_engine (str): The database engine.
+    :params db_host (str): The hostname of the database server.
+    :params db_port (int): The port number of the database server.
+    :params db_name (str): The name of the database.
+    :params db_user (str): The username to use for connecting to the database.
+    :params db_password (str): The password to use for connecting to the database.
+    :params extract_table (str): The name of the table to extract.
+    :returns: A StructType object representing the schema of the table.
+    """
     LOGGER.info(f"Getting {extract_table} schema for inferring datatypes.")
     db_table = extract_table.split(".")[-1]
 
@@ -356,7 +440,9 @@ def create_db_table_schema(
 
 
 def add_url_safe_current_time(data_frame: DataFrame) -> DataFrame:
-    # Create a column with the current timestamp safe for uris
+    """
+    Adds a column to the given data frame with the current timestamp in a format safe for use in URIs.
+    """
     data_frame = data_frame.withColumn("jdbc_extract_time", current_timestamp())
     data_frame = data_frame.withColumn(
         "jdbc_extract_time",
@@ -365,35 +451,52 @@ def add_url_safe_current_time(data_frame: DataFrame) -> DataFrame:
     return data_frame
 
 
-def main():
+def determine_extract_plan(
+    provided_hwm_value: Any,
+    provided_lwm_value: Any,
+    extract_type: str,
+    tracking_table: Dict[str, Any],
+) -> Tuple[Any, Any]:
     """
-    If it is a FE, continue as normal.
-    If PE, check if the table exists, if it does, get the new hwm and lwm values for extract,
-    otherwise refer to the hwm and lwm values already provided.
-    If reingest is True, don't supply new HWM values and refer to the original.
+    Determines the extract plan based on the provided extract type, tracking table, and reingest flag.
+    If the extract type is "PE", it checks if the tracking table is not available or the previous extract was not
+    successful. If either of these conditions are  true, it returns a full extract from scratch.
+    If neither of these conditions are true, it checks if the reingest flag is set.
+    If it is, it returns a partial extract using the original HWM values. If the reingest flag is not set,
+    it returns a partial extract using the new HWM and LWM values. If the extract type is not "PE" (so it is "FE"),
+    it checks if the tracking table is available. If it is, it returns a full extract.
+    If the tracking table is not available, it returns a full extract.
     """
+    hwm_value = provided_hwm_value
+    lwm_value = provided_lwm_value
 
+    if extract_type == "PE":
+        if not tracking_table or tracking_table["extract_successful"]["S"] != "Y":
+            return hwm_value, lwm_value
+        elif _reingest:
+            return hwm_value, lwm_value
+        else:
+            hwm_value = tracking_table["hwm_value"]["S"]
+            try:
+                lwm_value = MINIMUM_SUPPORTED_PARTITION_VALUES[_partition_column_type]
+            except KeyError as err:
+                raise KeyError(
+                    f"The partition datatype: {_partition_column_type} is not supported"
+                ) from err
+            return hwm_value, lwm_value
+    else:
+        return hwm_value, lwm_value
+
+
+def main():
     tracking_table = get_tracking_table_item(source=_source)
 
-    hwm_value = _hwm_value
-    lwm_value = _lwm_value
-
-    if _extract_type == "PE" and tracking_table and not _reingest:
-        LOGGER.info("Running Partial Extract")
-        # rerun from scratch if last extract failed
-        if tracking_table["extract_successful"] == "Y":
-            hwm_value = tracking_table["hwm_value"]
-            lwm_value = tracking_table["lwm_value"]
-            LOGGER.info(
-                f"Partial Extract with hwm_value: {hwm_value} and lwm_value: {lwm_value}"
-            )
-        else:
-            LOGGER.info("Previous extract failed, re-running extract with base params")
-    else:
-        if tracking_table:
-            LOGGER.info("Running initial Full Extract for Partial Extract job")
-        else:
-            LOGGER.info("Running Full Extract")
+    hwm_value, lwm_value = determine_extract_plan(
+        provided_hwm_value=_hwm_value,
+        provided_lwm_value=_lwm_value,
+        extract_type=_extract_type,
+        tracking_table=tracking_table,
+    )
 
     # update the tracking table with new or existing data
     update_tracking_table(
@@ -412,8 +515,8 @@ def main():
     sql_where_condition = get_sql_where_condition(
         extract_type=_extract_type,
         hwm_col_name=_hwm_col_name,
-        hwm_value=hwm_value,
         lwm_value=lwm_value,
+        hwm_value=hwm_value,
     )
     extract_table_namespace = convert_db_namespaces(
         extract_table=_extract_table, db_name=_db_name, db_engine=_db_engine
@@ -485,12 +588,18 @@ def main():
 
     # Update the hwm and lwm value for the next run, since we want to move to the next
     # hwm and lwm values, the hwm_value is turned off and lwm value is set to the max
-    LOGGER.info("Update the hwm and lwm value for the next run")
-    lwm_value = (
-        data_frame.select(max(col(_partition_column)).alias("max_col")).first().max_col
-    )
-    hwm_value = "-1"
+    if _extract_type == "PE":
+        LOGGER.info(
+            "Update the hwm and lwm value for the next PE run, hwm will now be `-1`"
+        )
+        lwm_value = (
+            data_frame.select(max(col(_partition_column)).alias("max_col"))
+            .first()
+            .max_col
+        )
+        hwm_value = "-1"
 
+    LOGGER.info("Updating tracking table")
     update_tracking_table(
         source=_source,
         hwm_value=hwm_value,
@@ -517,14 +626,15 @@ if __name__ == "__main__":
     _db_host = _db_secret["db_host"]
     _db_port = 5432
     _db_name = "fzmjfsta"
-    _partition_column = "customerid"
+    _partition_column = "accountid"
+    _partition_column_type = "IntegerType"
     _lower_bound = "1"
     _upper_bound = "2000"
     _num_partitions = "4"
     _fetchsize = "100"
     _extract_table = "public.accounts"
     _extract_type = "PE"
-    _hwm_col_name = "customerid"
+    _hwm_col_name = "accountid"
     _lwm_value = "1"
     _hwm_value = "1000"
     _repartition_dataframe = True
@@ -536,6 +646,10 @@ if __name__ == "__main__":
     job = Job(GLUE)
     job.init(args["JOB_NAME"], args)
     LOGGER.info("Starting Extract Job")
-    main()
+    try:
+        main()
+    except Exception as error:
+        # To log the error to the user console as reference
+        raise error from error
     LOGGER.info("Job Complete!")
     job.commit()

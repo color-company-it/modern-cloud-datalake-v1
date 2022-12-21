@@ -36,7 +36,7 @@ with open("config.yml", "r") as f:
     config = yaml.safe_load(f)
 spark = (
     SparkSession.builder.appName("pipeline")
-        .config("spark.jars.packages", config["jars"])
+        .config("SPARK.jars.packages", config["jars"])
         .getOrCreate()
 )
 

@@ -10,10 +10,10 @@ RUN yum update -y && yum install -y java-1.8.0-openjdk-devel tar curl unzip pyth
 #    rm -r hadoop-3.3.0.tar.gz
 
 # Install PySpark
-RUN curl https://archive.apache.org/dist/spark/spark-3.1.1/spark-3.1.1-bin-hadoop2.7.tgz > spark-3.1.1-bin-hadoop2.7.tgz && \
-    tar -xvf spark-3.1.1-bin-hadoop2.7.tgz && \
-    mv spark-3.1.1-bin-hadoop2.7 /opt/spark && \
-    rm -r spark-3.1.1-bin-hadoop2.7.tgz
+RUN curl https://archive.apache.org/dist/spark/spark-3.1.1/spark-3.1.1-bin-hadoop2.7.tgz > SPARK-3.1.1-bin-hadoop2.7.tgz && \
+    tar -xvf SPARK-3.1.1-bin-hadoop2.7.tgz && \
+    mv SPARK-3.1.1-bin-hadoop2.7 /opt/SPARK && \
+    rm -r SPARK-3.1.1-bin-hadoop2.7.tgz
 
 # Install AWS CLI
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \

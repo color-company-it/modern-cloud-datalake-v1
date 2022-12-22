@@ -1,131 +1,256 @@
-"""
-This module contains a collection of methods
-used to dynamically allocate the ideal amount
-of resources for an extract job.
-"""
+import difflib
+import logging
+from typing import Dict, Any, Tuple
 
-import time
+import mysql.connector
+import psycopg2
+from pyspark.sql.types import *
 
-from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import lit
-
-from codebase import EXTRACT_TYPES
+from codebase.etl import DATA_TYPE_MAPPING, MIN_VALUES
 
 
-def generate_sql_where_condition(
-    hwm_col_name: str, lwm_value: str, hwm_value: str, extract_type: str
+def convert_db_namespaces(extract_table: str, db_name: str, db_engine: str) -> str:
+    """
+    Converts the database namespaces in the specified extract table based on the database engine.
+
+    :params extract_table: a string representing the extract table whose namespaces are to be converted.
+    :params db_name: a string representing the name of the database.
+    :params db_engine: a string representing the database engine (e.g. "postgres", "mysql").
+
+    :returns: A string representing the converted database namespaces for the specified extract table.
+    """
+    if db_engine == "postgres":
+        result = '"."'.join(extract_table.split("."))
+        db_namespaces = f'"{db_name}"."{result}"'
+    elif db_engine == "mysql":
+        result = "`.`".join(extract_table.split("."))
+        db_namespaces = f"`{db_name}`.`{result}`"
+    else:
+        raise EnvironmentError(f"The db_engine: {db_engine} is not supported")
+
+    logging.info(
+        f"Converted db_namespaces using extract_table: "
+        f"{extract_table}, db_name: {db_name}, and db_engine: {db_engine}.\n"
+        f"To db_namespaces: {db_namespaces}"
+    )
+    return db_namespaces
+
+
+def get_sql_where_condition(
+    extract_type, lwm_value, hwm_col_name, hwm_value, hwm_column_type, reingest
+):
+    if extract_type == "FE":
+        sql_where_condition = ""
+    elif extract_type == "PE":
+        if reingest:
+            try:
+                logging.warning(
+                    "Source is being reingested, all original data may be overwritten!"
+                )
+                sql_where_condition = (
+                    f"WHERE {hwm_col_name} > '{MIN_VALUES[hwm_column_type]}'"
+                )
+            except KeyError as err:
+                raise KeyError(
+                    f"The provided hwm_column_type: {hwm_column_type} is not a valid option"
+                ) from err
+        else:
+            # if hwm is -1 it means we need to pull in all newest data
+            if hwm_value == "-1":
+                sql_where_condition = f"WHERE {hwm_col_name} > '{lwm_value}'"
+            else:
+                sql_where_condition = f"WHERE {hwm_col_name} > '{lwm_value}' and {hwm_col_name} <= '{hwm_value}'"
+    else:
+        raise EnvironmentError(f"The _extract_type: {extract_type} is not supported")
+
+    logging.info(f"Got SQL WHERE condition: {sql_where_condition}")
+    return sql_where_condition
+
+
+def get_pushdown_query(
+    extract_table: str, sql_where_condition: str, db_name: str
 ) -> str:
     """
-    Generate a SQL WHERE condition that filters records by a high watermark column.
+    Get a pushdown query to extract data from a database table.
 
-    :param hwm_col_name: The name of the high watermark column.
-    :param lwm_value: The low watermark value for the high watermark column.
-    :param hwm_value: The high watermark value for the high watermark column.
-    :param extract_type: Either `FE` for full extract, or `PE` for partial extract.
-    :returns: A string containing the generated SQL WHERE condition.
+    :params extract_table (str): The name of the table to extract data from.
+    :params sql_where_condition (str): The WHERE clause to use in the SELECT statement.
+    :params db_name (str): The name of the database.
+    :returns: A string representing the pushdown query.
+    """
+    pushdown_query = (
+        f"(SELECT * FROM {extract_table} {sql_where_condition}) {db_name}_alias"
+    )
+    logging.info(f"Got pushdown query: {pushdown_query}")
+    return pushdown_query
+
+
+def get_jdbc_url(db_host: str, db_port: int, db_name: str, db_engine: str) -> str:
+    """
+    Returns a JDBC URL based on the specified database engine.
+
+    :params db_host: a string representing the hostname of the database.
+    :params db_port: an integer representing the port number of the database.
+    :params db_name: a string representing the name of the database.
+    :params db_engine: a string representing the database engine (e.g. "postgres", "mysql").
+    :returns: A string representing the JDBC URL for the specified database.
+    """
+    if db_engine == "postgres":
+        jdbc_url = f"jdbc:postgresql://{db_host}:{db_port}/{db_name}"
+    elif db_engine == "mysql":
+        jdbc_url = f"jdbc:mysql://{db_host}:{db_port}/{db_name}"
+    else:
+        raise EnvironmentError(f"The engine: {db_engine} is not supported")
+    logging.info(f"Got JDBC URL: {jdbc_url}")
+    return jdbc_url
+
+
+def get_column_data_types(
+    engine: str,
+    host: str,
+    port: int,
+    database: str,
+    user: str,
+    password: str,
+    table_name: str,
+) -> Dict[str, str]:
+    """
+    Get the data types of the columns in a database table.
+
+    :params engine (str): The database engine.
+    :params host (str): The hostname of the database server.
+    :params port (int): The port number of the database server.
+    :params database (str): The name of the database.
+    :params user (str): The username to use for connecting to the database.
+    :params password (str): The password to use for connecting to the database.
+    :params table_name (str): The name of the table.
+    :returns: A dictionary mapping column names to data types.
     """
 
+    if engine == "postgres":
+        conn = psycopg2.connect(
+            host=host, port=port, database=database, user=user, password=password
+        )
+        query = f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table_name}'"
+    elif engine == "mysql":
+        conn = mysql.connector.connect(
+            host=host, port=port, database=database, user=user, password=password
+        )
+        query = f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table_name}'"
+    else:
+        raise EnvironmentError(f"The engine: {engine} is not supported")
+
+    cursor = conn.cursor()
+
+    # Query the database to get the column names and data types
+    cursor.execute(query)
+
+    # Fetch the results of the query
+    column_data_types = cursor.fetchall()
+
+    # Create a dictionary to store the column names and data types
+    column_data_type_dict = {}
+
+    # Iterate through the column data types and add them to the dictionary
+    for column_data_type in column_data_types:
+        column_name, data_type = column_data_type
+        column_data_type_dict[column_name] = data_type
+
+    return column_data_type_dict
+
+
+def create_db_table_schema(
+    db_engine: str,
+    db_host: str,
+    db_port: int,
+    db_name: str,
+    db_user: str,
+    db_password: str,
+    extract_table: str,
+) -> StructType:
+    """
+    Create the schema for a database table by inferring the data types of the columns.
+
+    :params db_engine (str): The database engine.
+    :params db_host (str): The hostname of the database server.
+    :params db_port (int): The port number of the database server.
+    :params db_name (str): The name of the database.
+    :params db_user (str): The username to use for connecting to the database.
+    :params db_password (str): The password to use for connecting to the database.
+    :params extract_table (str): The name of the table to extract.
+    :returns: A StructType object representing the schema of the table.
+    """
+    logging.info(f"Getting {extract_table} schema for inferring datatypes.")
+    db_table = extract_table.split(".")[-1]
+
+    # Convert the DataFrame to a dictionary
+    source_schema: dict = get_column_data_types(
+        engine=db_engine,
+        host=db_host,
+        port=db_port,
+        database=db_name,
+        user=db_user,
+        password=db_password,
+        table_name=db_table,
+    )
+    spark_schema: dict = DATA_TYPE_MAPPING[db_engine]
+    logging.info(f"Source Schema: {source_schema}")
+    new_schema_struct = []
+    for source_column, source_type in source_schema.items():
+        closest_match = difflib.get_close_matches(source_type, spark_schema.keys())
+        if closest_match:
+            try:
+                logging.info(
+                    f"Casting column: {source_column} from {source_type} to {spark_schema[closest_match[0]]}"
+                )
+                new_schema_struct.append(
+                    StructField(source_column, spark_schema[closest_match[0]], True)
+                )
+            except KeyError as error:
+                logging.info(
+                    "Casting column: {source_column} not found in mapping, defaulting to StringType"
+                )
+                new_schema_struct.append(StructField(source_column, StringType(), True))
+        else:
+            logging.info(
+                f"Casting column: {source_column} from {source_type} to StringType"
+            )
+            new_schema_struct.append(StructField(source_column, StringType(), True))
+
+    return StructType(new_schema_struct)
+
+
+def determine_extract_plan(
+    provided_hwm_value: Any,
+    provided_lwm_value: Any,
+    extract_type: str,
+    tracking_table: Dict[str, Any],
+) -> Tuple[Any, Any]:
+    """
+    Determines the extract plan based on the provided extract type. If the extract type is 'FE',
+    the provided high and low watermark values are returned. If the extract type is 'PE', the
+    tracking table is checked for the high and low watermark values. If the tracking table is
+    empty, the provided high and low watermark values are returned. If the extract type is not
+    'FE' or 'PE', a ValueError is raised.
+
+    :params provided_hwm_value (Any): The provided high watermark value.
+    :params provided_lwm_value (Any): The provided low watermark value.
+    :params extract_type (str): The type of extract. Can be either 'FE' or 'PE'.
+    :params tracking_table (Dict[str, Any]): A dictionary containing the tracking table for the extract.
+                                      The keys 'hwm_value' and 'lwm_value' should contain the
+                                      high and low watermark values, respectively.
+
+    :returns: Tuple[Any, Any]: A tuple containing the high and low watermark values to use for the extract.
+    """
+    # return the provided values if FE and that's it
     if extract_type == "FE":
-        return "".strip()
-    if extract_type == "PE":
-        return f"""
-    WHERE {hwm_col_name} > {lwm_value} and {hwm_col_name} <= {hwm_value}
-    """.strip()
+        return provided_hwm_value, provided_lwm_value
 
-    raise ValueError(
-        f"The provided extract_type: {extract_type} is not a supported one"
-        f"of {EXTRACT_TYPES} for the generate_sql_where_condition method"
-    )
+    # determine if this is a new run, then return the provided values or ddb values
+    elif extract_type == "PE":
+        if tracking_table:
+            return tracking_table["hwm_value"]["S"], tracking_table["lwm_value"]["S"]
+        return provided_hwm_value, provided_lwm_value
 
-
-def generate_sql_pushdown_query(extract_table: str, sql_where_condition: str) -> str:
-    """
-    Generate a SQL Pushdown query using a FROM clause, WHERE condition, and table name.
-
-    :param extract_table: The _namespace of the table being extracted, such as
-                          db_name.db_schema.db_table or whatever other _namespace is
-                          applicable.
-    :param sql_where_condition: SQL WHERE condition to be used in the query
-    :returns: A string representing the generated SQL Pushdown query
-    """
-    alias = (
-        extract_table.split(".")[-1].replace('"', "").replace("'", "").replace("`", "")
-    )
-    return f"(SELECT * FROM {extract_table} {sql_where_condition.strip()}) {alias}_alias".strip()
-
-
-def parse_extract_table(extract_table: str) -> tuple:
-    """
-    Parse the extract_table variable and return a dictionary containing the database name, schema, and table name.
-
-    :param extract_table: A string representing the database, schema, and table to be extracted in the format of
-    "<db_name>.<db_schema>.<db_table>" or "<db_name>.<db_table>" or "<db_table>"
-    :returns: A tuple containing the database name, schema, and table name
-    :raises ValueError: If the extract_table variable does not have one of the three formats mentioned above
-    """
-    parts = extract_table.split(".")
-
-    # Return a dictionary containing the database name, schema, and table name
-    # The value of each key is set to None if not specified in the extract_table variable
-
-    # full_namespace
-    if len(parts) == 3:
-        return parts[0], parts[1], parts[2]
-
-    # partial_namespace
-    if len(parts) == 2:
-        return parts[0], None, parts[1]
-
-    # no_namespace
-    if len(parts) == 1:
-        return None, None, parts[0]
-
-    raise ValueError("The provided _namespace is invalid when parsing extract table.")
-
-
-def add_jdbc_extract_time_field(data_frame: DataFrame) -> DataFrame:
-    """Returns the current ISO time in seconds"""
-    return data_frame.withColumn("jdbc_extract_time", lit(int(time.time())))
-
-
-def jdbc_read(
-    spark: SparkSession,
-    jdbc_params: dict,
-    sql_pushdown_query: str,
-    partition_column: str,
-    lower_bound: int,
-    upper_bound: int,
-    num_partitions: int,
-    fetchsize: int,
-) -> DataFrame:
-    """
-    Reads data from a JDBC source using the specified JDBC URL and SQL pushdown query.
-    The function can be parameterized with options to customize the JDBC read process, such
-    as specifying a fetch size and partitioning options.
-    """
-    data_frame = (
-        spark.read.option("partitionColumn", partition_column)
-        .option("lowerBound", lower_bound)
-        .option("upperBound", upper_bound)
-        .option("numPartitions", num_partitions)
-        .option("fetchsize", fetchsize)
-        .jdbc(table=sql_pushdown_query.strip(), **jdbc_params)
-    )
-    return data_frame
-
-
-def get_hwm_and_lwm_values(data_frame: DataFrame, field: str) -> tuple:
-    """
-    Get the hwm_value and lwm_value of a field in a PySpark data frame.
-
-    :param data_frame: PySpark data frame
-    :param field: Name of the field
-    :returns: A tuple containing the hwm_value and lwm_value of the field in the data frame
-    """
-
-    # Calculate the hwm_value and lwm_value using the max() and min() functions
-    hwm_value = data_frame.select(max(field)).first()[0]
-    lwm_value = data_frame.select(min(field)).first()[0]
-
-    # Return the hwm_value and lwm_value
-    return hwm_value, lwm_value
+    else:
+        raise ValueError(f"Extract type {extract_type} is not supported")

@@ -1,3 +1,4 @@
+
 ![logo](src/logo.png)
 
 # Welcome to the Modern Cloud Datalake V1!
@@ -13,64 +14,10 @@ organizations gain a better understanding of their data and make more informed d
 and effectiveness. Overall, modern data lake designs are an important tool for organizations looking to extract value
 from their data and drive business growth.
 
-1. Introduction
-    1. [Repository Structure](1_Introduction/1_RepositoryStructure.md)
-    2. [Software Development Life Cycle](1_Introduction/2_SoftwareDevelopmentLifeCycle.md)
-    3. [Overview Of The DataLake](1_Introduction/3_OverviewOfTheDataLake.md)
-2. Extract, Transform, and Load Pipelines
-    1. [JDBC Extract Pipeline](2_ExtractTransformLoadPipelines/1_JDBCExtract.md)
-    2. [JDBC Transform Pipeline](2_ExtractTransformLoadPipelines/2_JDBCTransform.md)
-    3. [JDBC Load Pipeline](2_ExtractTransformLoadPipelines/3_JDBCLoad.md)
-    4. [JDBC ETL Terraform](2_ExtractTransformLoadPipelines/4_JDBC_ETLTerraform.md)
-    5. [API Extract](2_ExtractTransformLoadPipelines/5_APIExtract.md)
-3. JDBC Sources
-    1. [Optimising JDBC ETL Pipelines](2_ExtractTransformLoadPipelines/1_OptimisingJDBCETLPipelines.md)
-4. Environments And Layers
-    1. [Configuration](4_EnvironmentsAndLayers/1_Configuration.md)
-    2. [Infrastructure](4_EnvironmentsAndLayers/2_Infrastructure.md)
-    3. [Orchestration](4_EnvironmentsAndLayers/3_Orchestration.md)
-    4. [Codebase](4_EnvironmentsAndLayers/4_Codebase.md)
-    5. [Testing](4_EnvironmentsAndLayers/5_Testing.md)
-    6. [Monitoring](4_EnvironmentsAndLayers/6_Monitoring.md)
-5. Testing And Maintenance
-    1. [Test Cases and Methodologies](5_TestingAndMaintenance/1_TestCasesAndMethodologies.md)
-    2. [Troubleshooting](5_TestingAndMaintenance/2_Troubleshooting.md)
-6. FAQs & Additional Resources
-    1. [FAQs](6_FAQsAndAdditionalResources/1_FAQs.md)
-    2. [Additional Resources](6_FAQsAndAdditionalResources/2_AdditionalResources.md)
+![Architecture](./src/arhitecture.png)
 
-Obsidian is a powerful, open-source documentation application that allows you to create, organize, and share your notes
-and ideas. With Obsidian, you can create your own "brain" by connecting your notes together with links and
-relationships, creating a network of ideas and knowledge that is easy to navigate and explore.
+# Index
 
-To use Obsidian, you first need to download and install the application on your computer. Once you have installed
-Obsidian, you can create a new "vault" to store your notes and ideas. A vault is a collection of notes that are
-organized into folders and sub-folders, and can be linked together using Obsidian's linking and relationship features.
-
-To create a new note in Obsidian, you can simply click the "New Note" button and enter a title for your note. You can
-then use Obsidian's markdown editor to add text, images, code blocks, and other content to your note. You can also use
-the linking and relationship features to connect your notes together and create a network of ideas and knowledge.
-
-Once you have created your notes and linked them together, you can use Obsidian's search and navigation features to
-easily find and explore your notes. You can also use Obsidian's tagging and filtering features to organize and classify
-your notes, making it easier to find the information that you are looking for.
-
-# Viewing this documentation using Obsidian
-
-**NOTE**!
-THIS DOCUMENTATION MAKES USE OF THE OBSIDIAN APPLICATION TO READ, WRITE, AND MAINTAIN IT.
-
-See more about it below.
-
-To use the Obsidian application to clone the "enterprise-datalake-poc-2022.wiki.git" repository, you would first need to
-download and install Obsidian on your computer. Once you have installed Obsidian, you can follow these steps to clone
-the repository:
-
-1. Open Obsidian and create a new vault to store your notes and ideas.
-2. In the main menu, go to "Tools" > "Git" > "Clone".
-3. In the "Clone Repository" dialog, enter the repository URL and choose a local directory where you want to store the
-   cloned repository.
-4. Click "Clone" to start the cloning process. This may take a few minutes, depending on the size of the repository.
-5. Once the cloning process is complete, you will see a new folder in your vault that contains the cloned repository.
-   You can click on the folder to view the contents of the repository, and you can use Obsidian's navigation and search
-   features to find and explore the repository's files and folders.
+1. 1_UserDocumentation
+	- [1_CodebaseModule](1_UserDocumentation/1_CodebaseModule.md)
+	- [2_JDBCExtractPipeline](1_UserDocumentation/2_JDBCExtractPipeline.md)

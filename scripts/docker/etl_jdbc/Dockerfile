@@ -4,6 +4,6 @@ FROM base_pyspark
 WORKDIR app/
 COPY scripts/docker/etl_jdbc/base_etl_jdbc_1.sh ./
 COPY ../../../codebase/ codebase/
-COPY ../../../scripts/spark/jdbc/* ./
+COPY ../../../scripts/spark/* ./
 
 ENTRYPOINT ["bash", "base_etl_jdbc_1.sh"]

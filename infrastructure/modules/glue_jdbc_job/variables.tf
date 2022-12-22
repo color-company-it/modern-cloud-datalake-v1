@@ -43,3 +43,8 @@ variable "codebase" {
   type        = string
   description = "The S3 ARN for the codebase.zip file for the glue job to use"
 }
+
+variable "tracking-table-name" {
+  type        = string
+  description = "The DDB extract tracking table name to track extract processes"
+}

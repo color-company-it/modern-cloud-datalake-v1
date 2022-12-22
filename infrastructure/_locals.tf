@@ -7,6 +7,9 @@ locals {
     path = "${path.root}/../dist/codebase-0.1-py3-none-any.whl"
   }
 
+  # codebase lambda layer
+  codebase-lambda-layer-local-dir = "${path.root}/../codebase_layer"
+
   /*
   This Terraform code defines a map named repository-layers that contains
   the file paths of four directories: test_codebase, configuration, orchestration,
@@ -30,8 +33,8 @@ locals {
   Terraform code.
   */
   configuration-files = fileset(local.repository-layers.configuration, "*.yaml")
-  docker-scripts      = fileset("${local.repository-layers.scripts}/docker/", "*")
-  spark-jdbc-scripts  = fileset("${local.repository-layers.scripts}/spark/jdbc/", "*")
+  spark-jdbc-scripts  = fileset("${local.repository-layers.scripts}/spark/", "*")
+  glue-jdbc-scripts   = fileset("${local.repository-layers.scripts}/glue/", "*")
 
   /*
   sdlc-stages is a local variable that specifies the different stages of the

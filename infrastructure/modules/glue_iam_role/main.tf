@@ -31,28 +31,39 @@ data "aws_iam_policy_document" "glue-job-policy" {
   }
 
   statement {
-    sid       = "AllowCloudWatchLogs"
-    effect    = "Allow"
-    actions   = ["*"]
-    resources = ["*"]
+    sid    = "AllowCloudWatchLogs"
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = ["arn:aws:logs:*:*:*"]
+  }
+
+  statement {
+    sid    = "AllowGetSecrets"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:ListSecretVersionIds",
+      "secretsmanager:ListSecrets"
+    ]
+    resources = [
+      "arn:aws:secretsmanager:*:${var.account-id}:secret:*"
+    ]
   }
 
   statement {
     sid    = "AllowS3"
     effect = "Allow"
     actions = [
-      "s3:PutObject",
-      "s3:GetObject",
-      "s3:ListBucket",
-      "s3:DeleteObject",
-      "s3:GetBucketAcl",
-      "s3:GetBucketLocation"
+      "s3:Put*",
+      "s3:Get*",
+      "s3:List*",
+      "s3:Delete*",
     ]
-    resources = [
-      "arn:aws:s3:::${var.script-s3-bucket-name}/*",
-      "arn:aws:s3:::${var.etl-s3-bucket-name}/*",
-      "arn:aws:s3:::${var.codebase-s3-bucket-name}/*"
-    ]
+    resources = ["*"]
   }
 
   statement {
@@ -97,12 +108,11 @@ data "aws_iam_policy_document" "glue-job-policy" {
     actions = [
       "dynamodb:PutItem",
       "dynamodb:DeleteItem",
-      "dynamodb:GetItem",
       "dynamodb:Scan",
       "dynamodb:Query",
-      "dynamodb:UpdateItem",
-      "dynamodb:ImportTable",
-      "dynamodb:GetRecords"
+      "dynamodb:Update*",
+      "dynamodb:Create*",
+      "dynamodb:Get*",
     ]
     resources = var.tracking-table-names
   }

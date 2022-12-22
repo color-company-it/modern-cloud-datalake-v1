@@ -1,4 +1,4 @@
-# test_codebase      --------------------------------------------------------------------------------------------------------
+# codebase      --------------------------------------------------------------------------------------------------------
 resource "aws_s3_bucket" "codebase-bucket" {
   bucket = "${var.business-name}-codebase"
   acl    = "private"
@@ -27,7 +27,8 @@ resource "aws_s3_bucket_object" "codebase-whl" {
   bucket = aws_s3_bucket.codebase-bucket.bucket
   key    = "codebase/${local.codebase-whl.name}"
   source = local.codebase-whl.path
-  etag   = filemd5(local.codebase-whl.path)
+  # This is a bug in the provider, which should be reported in the provider's own issue tracker.
+  # etag   = filemd5(local.codebase-whl.path)
 }
 
 # configuration     ----------------------------------------------------------------------------------------------------

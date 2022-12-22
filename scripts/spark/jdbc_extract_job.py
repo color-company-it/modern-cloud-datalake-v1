@@ -9,22 +9,18 @@ extract on the next run, or reingest or rerun based on the success of the pipeli
 
 The job supports the following JDBC engines: postgres and mysql.
 """
+import argparse
 import datetime
 import difflib
 import json
 import logging
-import sys
+from decimal import Decimal
 from typing import Dict, Any, Tuple
 
 import boto3
 import mysql.connector
 import psycopg2
-from awsglue.context import GlueContext
-from awsglue.job import Job
-from awsglue.transforms import *
-from awsglue.utils import getResolvedOptions
-from pyspark.context import SparkContext
-from pyspark.sql import DataFrame
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col, current_timestamp, max, date_format
 from pyspark.sql.types import *
 
@@ -40,16 +36,14 @@ SCHEMA_QUERY_MAPPING = {
     "mysql": "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = `{db_table}` AND table_schema = DATABASE()",
 }
 
-MINIMUM_SUPPORTED_PARTITION_VALUES = {
-    "ByteType": "-128",
-    "ShortType": "-32768",
-    "IntegerType": "-2147483648",
-    "LongType": "-9223372036854775808",
-    "FloatType": "-3.4028235E38",
-    "DoubleType": "-1.7976931348623157E308",
-    "DecimalType": "0",  # This is the minimum value for DecimalType with precision 0
-    "TimestampType": "0000-00-00 00:00:00",
-    "DateType": "0000-00-00",
+MIN_VALUES = {
+    "IntegerType": -2147483648,
+    "LongType": -9223372036854775808,
+    "FloatType": -3.4028234663852886e38,
+    "DoubleType": -1.7976931348623157e308,
+    "DecimalType": Decimal("-999999999999999999999999999999999.9999999999999999"),
+    "DateType": datetime.date(1, 1, 1),
+    "TimestampType": datetime.datetime(1, 1, 1, 0, 0, 0),
 }
 
 # db_engine.source_dtype : spark_dtype
@@ -134,7 +128,7 @@ def update_tracking_table(
     hwm_value: Any,
     lwm_value: Any,
     hwm_col_name: str,
-    partition_column_type: str,
+    hwm_column_type: str,
     extract_type: str,
     extract_metadata: dict,
     extract_successful: str,
@@ -162,7 +156,7 @@ def update_tracking_table(
         "hwm_value": {"S": str(hwm_value)},
         "lwm_value": {"S": str(lwm_value)},
         "hwm_col_name": {"S": hwm_col_name},
-        "hwm_column_type": {"S": partition_column_type},
+        "hwm_column_type": {"S": hwm_column_type},
         "extract_type": {"S": extract_type},
         "updated_at": {"S": str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))},
         "extract_successful": {"S": extract_successful},
@@ -243,17 +237,25 @@ def convert_db_namespaces(extract_table: str, db_name: str, db_engine: str) -> s
     return db_namespaces
 
 
-def get_sql_where_condition(extract_type, lwm_value, hwm_col_name, hwm_value):
+def get_sql_where_condition(
+    extract_type, lwm_value, hwm_col_name, hwm_value, hwm_column_type, reingest
+):
     if extract_type == "FE":
         sql_where_condition = ""
     elif extract_type == "PE":
-        # if hwm is -1 it means we need to pull in all newest data
-        if hwm_value == "-1":
-            sql_where_condition = f"WHERE {hwm_col_name} > {lwm_value}"
-        else:
-            sql_where_condition = (
-                f"WHERE {hwm_col_name} > {lwm_value} and {hwm_col_name} <= {hwm_value}"
+        if reingest:
+            LOGGER.warning(
+                "Source is being reingested, all original data may be overwritten!"
             )
+            sql_where_condition = (
+                f"WHERE {hwm_col_name} > '{MIN_VALUES[hwm_column_type]}'"
+            )
+        else:
+            # if hwm is -1 it means we need to pull in all newest data
+            if hwm_value == "-1":
+                sql_where_condition = f"WHERE {hwm_col_name} > '{lwm_value}'"
+            else:
+                sql_where_condition = f"WHERE {hwm_col_name} > '{lwm_value}' and {hwm_col_name} <= '{hwm_value}'"
     else:
         raise EnvironmentError(f"The _extract_type: {extract_type} is not supported")
 
@@ -461,46 +463,19 @@ def determine_extract_plan(
     provided_lwm_value: Any,
     extract_type: str,
     tracking_table: Dict[str, Any],
-) -> Tuple[Any, Any, str]:
-    """
-    Determines the extract plan based on the provided extract type, tracking table, and reingest flag.
-    If the extract type is "PE", it checks if the tracking table is not available or the previous extract was not
-    successful. If either of these conditions are  true, it returns a full extract from scratch.
-    If neither of these conditions are true, it checks if the reingest flag is set.
-    If it is, it returns a partial extract using the original HWM values. If the reingest flag is not set,
-    it returns a partial extract using the new HWM and LWM values. If the extract type is not "PE" (so it is "FE"),
-    it checks if the tracking table is available. If it is, it returns a full extract.
-    If the tracking table is not available, it returns a full extract.
-    """
-    plan_description = [f"{extract_type} plan with"]
-    hwm_value = provided_hwm_value
-    lwm_value = provided_lwm_value
+) -> Tuple[Any, Any]:
+    # return the provided values if FE and that's it
+    if extract_type == "FE":
+        return provided_hwm_value, provided_lwm_value
 
-    if extract_type == "PE":
-        if not tracking_table or tracking_table["extract_successful"]["S"] != "Y":
-            plan_description.append(
-                f"hwm_value: {hwm_value} and lwm_value: {lwm_value} on last extract_successful: False"
-            )
-            LOGGER.info("Returning full extract plan from scratch")
-            return hwm_value, lwm_value, " ".join(plan_description)
-        elif _reingest:
-            plan_description.append(
-                f"hwm_value: {hwm_value} and lwm_value: {lwm_value} on reingest"
-            )
-            LOGGER.info("Returning partial extract plan with original HWM values")
-            return hwm_value, lwm_value, " ".join(plan_description)
-        else:
-            hwm_value = "-1"
-            lwm_value = tracking_table["hwm_value"]["S"]
-            plan_description.append(
-                f"hwm_value: {hwm_value} and lwm_value: {lwm_value} on last extract_successful: True"
-            )
-            LOGGER.info("Returning partial extract plan with new HWM and LWM values")
-            return hwm_value, lwm_value, " ".join(plan_description)
+    # determine if this is a new run, then return the provided values or ddb values
+    elif extract_type == "PE":
+        if tracking_table:
+            return tracking_table["hwm_value"]["S"], tracking_table["lwm_value"]["S"]
+        return provided_hwm_value, provided_lwm_value
+
     else:
-        plan_description.append(f"hwm_value: {hwm_value} and lwm_value: {lwm_value}")
-        LOGGER.info("Returning full extract plan")
-        return hwm_value, lwm_value, " ".join(plan_description)
+        raise ValueError(f"Extract type {extract_type} is not supported")
 
 
 def main():
@@ -508,13 +483,12 @@ def main():
         source=_source, tracking_table_name=_tracking_table_name
     )
 
-    hwm_value, lwm_value, extract_plan = determine_extract_plan(
+    hwm_value, lwm_value = determine_extract_plan(
         provided_hwm_value=_hwm_value,
         provided_lwm_value=_lwm_value,
         extract_type=_extract_type,
         tracking_table=tracking_table,
     )
-    LOGGER.info(f"{'>' * 15}" f"Extract Plan: {extract_plan}" f"{'<' * 15}")
 
     # update the tracking table with new or existing data
     # if row_count is -1 it means the pipeline is running OR it failed
@@ -524,7 +498,7 @@ def main():
         hwm_value=hwm_value,
         lwm_value=lwm_value,
         hwm_col_name=_hwm_col_name,
-        partition_column_type=_partition_column_type,
+        hwm_column_type=_hwm_column_type,
         extract_type=_extract_type,
         extract_metadata={"row_count": -1},
         extract_successful="N",
@@ -539,6 +513,8 @@ def main():
         hwm_col_name=_hwm_col_name,
         lwm_value=lwm_value,
         hwm_value=hwm_value,
+        hwm_column_type=_hwm_column_type,
+        reingest=_reingest,
     )
     extract_table_namespace = convert_db_namespaces(
         extract_table=_extract_table, db_name=_db_name, db_engine=_db_engine
@@ -574,108 +550,164 @@ def main():
 
     # If the bounds are not set (-1) then do not use them.
     LOGGER.info("Extracting data from JDBC source")
-    if _lower_bound == "-1" or _upper_bound == "-1":
-        data_frame: DataFrame = (
-            SPARK.read.option("partitionColumn", _partition_column)
-            .option("numPartitions", _num_partitions)
-            .option("fetchsize", _fetchsize)
-            .option("schema", source_schema)
-            .jdbc(**_jdbc_params)
+    data_frame: DataFrame = (
+        SPARK.read.option("partitionColumn", _partition_column)
+        .option("lowerBound", _lower_bound)
+        .option("upperBound", _upper_bound)
+        .option("numPartitions", _num_partitions)
+        .option("fetchsize", _fetchsize)
+        .option("schema", source_schema)
+        .jdbc(**_jdbc_params)
+    )
+
+    if data_frame.count() > 0:
+        if _repartition_dataframe:
+            num_partitions = get_num_partitions(data_frame=data_frame)
+            LOGGER.info(f"Repartitioning DataFrame with {num_partitions} partitions")
+            data_frame = data_frame.repartition(num_partitions)
+
+        data_frame = add_url_safe_current_time(data_frame=data_frame)
+
+        LOGGER.info("Printing Schema:")
+        data_frame.printSchema()
+
+        if _reingest or _extract_type == "FE":
+            LOGGER.info(
+                f"Overwriting the directory before the extract write to: {_extract_s3_uri}"
+            )
+            data_frame.write.mode("overwrite").partitionBy(
+                _extract_s3_partitions
+            ).parquet(_extract_s3_uri)
+        else:
+            LOGGER.info(f"Writing data to: {_extract_s3_uri}")
+            data_frame.write.mode("append").partitionBy(_extract_s3_partitions).parquet(
+                _extract_s3_uri
+            )
+
+        # Update the hwm and lwm value for the next run, since we want to move to the next
+        # hwm and lwm values, the hwm_value is turned off and lwm value is set to the max
+        if _extract_type == "PE":
+            max_db_value = str(
+                data_frame.select(max(col(_partition_column)).alias("max_col"))
+                .first()
+                .max_col
+            )
+            lwm_value = max_db_value
+            hwm_value = "-1"
+            LOGGER.info(
+                f"Updating DBB watermarks hwm_value: {hwm_value} and lwm_value: {lwm_value}"
+            )
+
+        # Once the job completes without any issues, update the table with successful data
+        LOGGER.info("Updating tracking table")
+        update_tracking_table(
+            source=_source,
+            hwm_value=hwm_value,
+            lwm_value=lwm_value,
+            hwm_col_name=_hwm_col_name,
+            hwm_column_type=_hwm_column_type,
+            extract_type=_extract_type,
+            extract_metadata={"row_count": data_frame.count()},
+            extract_successful="Y",
+            tracking_table_name=_tracking_table_name,
         )
     else:
-        data_frame: DataFrame = (
-            SPARK.read.option("partitionColumn", _partition_column)
-            .option("lowerBound", _lower_bound)
-            .option("upperBound", _upper_bound)
-            .option("numPartitions", _num_partitions)
-            .option("fetchsize", _fetchsize)
-            .option("schema", source_schema)
-            .jdbc(**_jdbc_params)
+        # set to the original setup since there was no data to extract
+        update_tracking_table(
+            source=_source,
+            hwm_value=tracking_table["hwm_value"]["S"],
+            lwm_value=tracking_table["lwm_value"]["S"],
+            hwm_col_name=_hwm_col_name,
+            hwm_column_type=_hwm_column_type,
+            extract_type=_extract_type,
+            extract_metadata={"row_count": data_frame.count()},
+            extract_successful="Y",
+            tracking_table_name=_tracking_table_name,
         )
-
-    if _repartition_dataframe:
-        num_partitions = get_num_partitions(data_frame=data_frame)
-        LOGGER.info(f"Repartitioning DataFrame with {num_partitions} partitions")
-        data_frame = data_frame.repartition(num_partitions)
-
-    data_frame = add_url_safe_current_time(data_frame=data_frame)
-
-    LOGGER.info("Printing Schema:")
-    data_frame.printSchema()
-
-    LOGGER.info(f"Writing data to: {_extract_s3_uri}")
-    data_frame.write.mode("append").partitionBy("jdbc_extract_time").parquet(
-        _extract_s3_uri
-    )
-
-    # Update the hwm and lwm value for the next run, since we want to move to the next
-    # hwm and lwm values, the hwm_value is turned off and lwm value is set to the max
-    if _extract_type == "PE":
-        LOGGER.info(
-            "Update the hwm and lwm value for the next PE run, hwm will now be `-1`"
-        )
-        lwm_value = (
-            data_frame.select(max(col(_partition_column)).alias("max_col"))
-            .first()
-            .max_col
-        )
-        hwm_value = "-1"
-
-    # Once the job completes without any issues, update the table with successful data
-    LOGGER.info("Updating tracking table")
-    update_tracking_table(
-        source=_source,
-        hwm_value=hwm_value,
-        lwm_value=lwm_value,
-        hwm_col_name=_hwm_col_name,
-        partition_column_type=_partition_column_type,
-        extract_type=_extract_type,
-        extract_metadata={"row_count": data_frame.count()},
-        extract_successful="Y",
-        tracking_table_name=_tracking_table_name,
-    )
 
 
 if __name__ == "__main__":
-    SC = SparkContext()
-    GLUE = GlueContext(SC)
-    SPARK = GLUE.spark_session
     LOGGER = get_spark_logger()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--db_engine", type=str, help="Database engine")
+    parser.add_argument("--db_secret", type=str, help="AWS SecretsManager name")
+    parser.add_argument("--db_host", type=str, help="Database host")
+    parser.add_argument("--db_port", type=int, help="Database port")
+    parser.add_argument("--db_name", type=str, help="Database name")
+    parser.add_argument("--partition_column", type=str, help="Partition column")
+    parser.add_argument("--hwm_column_type", type=str, help="HWM column type")
+    parser.add_argument("--lower_bound", type=str, help="Lower bound")
+    parser.add_argument("--upper_bound", type=str, help="Upper bound")
+    parser.add_argument("--num_partitions", type=str, help="Number of partitions")
+    parser.add_argument("--fetchsize", type=str, help="Fetch size")
+    parser.add_argument("--extract_table", type=str, help="Extract table")
+    parser.add_argument("--extract_type", type=str, help="Extract type")
+    parser.add_argument("--hwm_col_name", type=str, help="HWM column name")
+    parser.add_argument("--lwm_value", type=str, help="LWM value")
+    parser.add_argument("--hwm_value", type=str, default="1000", help="HWM value")
+    parser.add_argument(
+        "--repartition_dataframe", type=str, default=True, help="Repartition dataframe"
+    )
+    parser.add_argument("--extract_s3_uri", type=str, help="Extract S3 URI")
+    parser.add_argument(
+        "--extract_s3_partitions",
+        type=str,
+        help="Comma separated strings to partition by",
+    )
+    parser.add_argument("--reingest", type=str, default=False, help="Reingest flag")
+    parser.add_argument(
+        "--tracking_table_name", type=str, help="The DynamoDB tracking table name"
+    )
+    parser.add_argument("--jars", type=str, help="Add an external jar to the classpath")
 
-    args = getResolvedOptions(sys.argv, ["JOB_NAME"])
-
-    _db_secret = get_db_secret("postgres/mock_db")
-    _db_engine = "postgres"
+    args = parser.parse_args()
+    _db_secret = get_db_secret(secret_name=args.db_secret)
+    _db_engine = args.db_engine
     _db_user = _db_secret["db_user"]
     _db_password = _db_secret["db_password"]
     _db_host = _db_secret["db_host"]
-    _db_port = 5432
-    _db_name = "fzmjfsta"
-    _partition_column = "accountid"
-    _partition_column_type = "IntegerType"
-    _lower_bound = "1"
-    _upper_bound = "2000"
-    _num_partitions = "4"
-    _fetchsize = "100"
-    _extract_table = "public.accounts"
-    _extract_type = "PE"
-    _hwm_col_name = "accountid"
-    _lwm_value = "1"
-    _hwm_value = "1000"
-    _repartition_dataframe = True
-    _extract_s3_uri = "s3a://dirkscgm-test/mock_business/extract/accounts/"
-
-    _reingest = False
+    _db_port = args.db_port
+    _db_name = args.db_name
+    _partition_column = args.partition_column
+    _hwm_column_type = args.hwm_column_type
+    _lower_bound = args.lower_bound
+    _upper_bound = args.upper_bound
+    _num_partitions = args.num_partitions
+    _fetchsize = args.fetchsize
+    _extract_table = args.extract_table
+    _extract_type = args.extract_type
+    _hwm_col_name = args.hwm_col_name
+    _lwm_value = args.lwm_value
+    _hwm_value = args.hwm_value
+    _repartition_dataframe = args.repartition_dataframe
+    _extract_s3_uri = args.extract_s3_uri
+    _extract_s3_partitions = args.extract_s3_partitions.split(",")
+    _reingest = args.reingest
     _source = f"{_db_name}.{_extract_table}"
-    _tracking_table_name = "dirkscgm-test"
+    _tracking_table_name = args.tracking_table_name
+    _jars = args.jars
 
-    job = Job(GLUE)
-    job.init(args["JOB_NAME"], args)
+    # Ensure booleans are booleans, default to false
+    _repartition_dataframe = bool(_repartition_dataframe.lower() in ["true", "y", "1"])
+    _reingest = bool(_reingest.lower() in ["true", "y", "1"])
+
+    SPARK = (
+        SparkSession.builder.appName(f"ExtractJob.{_source}")
+        .config("spark.jars", _jars)
+        .getOrCreate()
+    )
+
+    # make sure _hwm_column_type is supported
+    if _hwm_column_type not in MIN_VALUES:
+        raise EnvironmentError(
+            f"The provided hwm_column_type: {_hwm_column_type} is not supported"
+        )
+
     LOGGER.info("Starting Extract Job")
     try:
         main()
     except Exception as error:
         # To log the error to the user console as reference
+        LOGGER.info("An error was raised:", error)
         raise error from error
     LOGGER.info("Job Complete!")
-    job.commit()

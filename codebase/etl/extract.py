@@ -199,12 +199,18 @@ def create_db_table_schema(
     for source_column, source_type in source_schema.items():
         closest_match = difflib.get_close_matches(source_type, spark_schema.keys())
         if closest_match:
-            logging.info(
-                f"Casting column: {source_column} from {source_type} to {spark_schema[closest_match[0]]}"
-            )
-            new_schema_struct.append(
-                StructField(source_column, spark_schema[closest_match[0]], True)
-            )
+            try:
+                logging.info(
+                    f"Casting column: {source_column} from {source_type} to {spark_schema[closest_match[0]]}"
+                )
+                new_schema_struct.append(
+                    StructField(source_column, spark_schema[closest_match[0]], True)
+                )
+            except KeyError as error:
+                logging.info(
+                    "Casting column: {source_column} not found in mapping, defaulting to StringType"
+                )
+                new_schema_struct.append(StructField(source_column, StringType(), True))
         else:
             logging.info(
                 f"Casting column: {source_column} from {source_type} to StringType"

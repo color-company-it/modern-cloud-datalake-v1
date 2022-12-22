@@ -16,7 +16,18 @@ organizations gain a better understanding of their data and make more informed d
 and effectiveness. Overall, modern data lake designs are an important tool for organizations looking to extract value
 from their data and drive business growth.
 
+![Architecture](./src/arhitecture.png)
 
+"""
+
+FOOTER = """
+
+---
+<small> 
+Please note that the above code and associated documentation are provided as a reference and are not guaranteed to be
+error-free. This solution is a work in progress and may be subject to change. It is the responsibility of the user to
+thoroughly test and verify the correctness of the code before using it in production environments. 
+</small>
 """
 
 
@@ -54,7 +65,7 @@ def generate_index(directory: str) -> None:
         index_file.write("# Index\n\n")
 
         # Iterate through the file names
-        count = 0
+        count = 1
         for subheader, filenames in indexed_files.items():
             index_file.write(f"{count}. {subheader}\n")
             for filename in filenames:

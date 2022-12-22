@@ -30,10 +30,14 @@ if [ "$EDL_TYPE" == "extract" ]; then
     --reingest "${REINGEST}" \
     --tracking_table_name "${TRACKING_TABLE_NAME}" \
     --jars ./jars/mysql-connector-j-8.0.31.jar,./jars/postgresql-42.5.1.jar
+
 elif [ $EDL_TYPE == "transform" ]; then
   echo "Running Transform Pipeline"
+
 elif [ $EDL_TYPE == "load" ]; then
   echo "Running Load Pipeline"
+
 else
   echo "No EDL_TYPE specified"
+
 fi

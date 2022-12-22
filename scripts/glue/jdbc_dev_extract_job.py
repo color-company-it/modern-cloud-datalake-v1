@@ -9,6 +9,7 @@ extract on the next run, or reingest or rerun based on the success of the pipeli
 
 The job supports the following JDBC engines: postgres and mysql.
 """
+import argparse
 import sys
 
 from awsglue.context import GlueContext
@@ -188,36 +189,41 @@ def main():
 
 if __name__ == "__main__":
     LOGGER = get_spark_logger()
-    ## @params: [JOB_NAME]
-    args = getResolvedOptions(
-        sys.argv,
-        [
-            "JOB_NAME",
-            "--db_engine",
-            "--db_secret",
-            "--db_host",
-            "--db_port",
-            "--db_name",
-            "--partition_column",
-            "--hwm_column_type",
-            "--lower_bound",
-            "--upper_bound",
-            "--num_partitions",
-            "--fetchsize",
-            "--extract_table",
-            "--extract_type",
-            "--hwm_col_name",
-            "--lwm_value",
-            "--hwm_value",
-            "--repartition_dataframe",
-            "--extract_s3_uri",
-            "--extract_s3_partitions",
-            "--reingest",
-            "--tracking_table_name",
-            "--tracking_table_name",
-        ],
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--job_name", type=str, help="Glue Job Name")
+    parser.add_argument("--db_engine", type=str, help="Database engine")
+    parser.add_argument("--db_secret", type=str, help="AWS SecretsManager name")
+    parser.add_argument("--db_host", type=str, help="Database host")
+    parser.add_argument("--db_port", type=int, help="Database port")
+    parser.add_argument("--db_name", type=str, help="Database name")
+    parser.add_argument("--partition_column", type=str, help="Partition column")
+    parser.add_argument("--hwm_column_type", type=str, help="HWM column type")
+    parser.add_argument("--lower_bound", type=str, help="Lower bound")
+    parser.add_argument("--upper_bound", type=str, help="Upper bound")
+    parser.add_argument("--num_partitions", type=str, help="Number of partitions")
+    parser.add_argument("--fetchsize", type=str, help="Fetch size")
+    parser.add_argument("--extract_table", type=str, help="Extract table")
+    parser.add_argument("--extract_type", type=str, help="Extract type")
+    parser.add_argument("--hwm_col_name", type=str, help="HWM column name")
+    parser.add_argument("--lwm_value", type=str, help="LWM value")
+    parser.add_argument("--hwm_value", type=str, default="1000", help="HWM value")
+    parser.add_argument(
+        "--repartition_dataframe", type=str, default=True, help="Repartition dataframe"
     )
+    parser.add_argument("--extract_s3_uri", type=str, help="Extract S3 URI")
+    parser.add_argument(
+        "--extract_s3_partitions",
+        type=str,
+        help="Comma separated strings to partition by",
+    )
+    parser.add_argument("--reingest", type=str, default=False, help="Reingest flag")
+    parser.add_argument(
+        "--tracking_table_name", type=str, help="The DynamoDB tracking table name"
+    )
+    parser.add_argument("--jars", type=str, help="Add an external jar to the classpath")
 
+    args, _ = parser.parse_known_args()
+    _job_name = args.job_name
     _db_secret = get_db_secret(secret_name=args.db_secret)
     _db_engine = args.db_engine
     _db_user = _db_secret["db_user"]
@@ -259,10 +265,6 @@ if __name__ == "__main__":
         )
 
     LOGGER.info("Starting Extract Job")
-
-    job = Job(glueContext)
-    job.init(args["JOB_NAME"], args)
-
     try:
         main()
     except Exception as error:
@@ -270,4 +272,3 @@ if __name__ == "__main__":
         LOGGER.info("An error was raised:", error)
         raise error from error
     LOGGER.info("Job Complete!")
-    job.commit()

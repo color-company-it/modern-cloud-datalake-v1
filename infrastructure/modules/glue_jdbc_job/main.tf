@@ -18,11 +18,12 @@ resource "aws_glue_job" "glue-jdbc-job" {
 
   default_arguments = {
     # Args for Hudi 0.12.0
-    #"--datalake-formats" : "hudi"
-    #"--conf" : "SPARK.serializer=org.apache.SPARK.serializer.KryoSerializer --conf SPARK.sql.hive.convertMetastoreParquet=false"
+    "--datalake-formats" : "hudi"
+    "--conf" : "SPARK.serializer=org.apache.SPARK.serializer.KryoSerializer --conf SPARK.sql.hive.convertMetastoreParquet=false"
     "--additional-python-modules" = var.codebase
     "--enable-continuous-cloudwatch-log" : "true",
     "--enable-metrics" : "true"
+    "--tracking_table_name" : var.tracking-table-name
   }
 
   connections = var.connections

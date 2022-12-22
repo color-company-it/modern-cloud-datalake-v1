@@ -11,4 +11,8 @@ module "jdbc-glue-iam-roles" {
   sdlc-stage  = var.sdlc-stage
   account-id  = data.aws_caller_identity.current.account_id
   region-name = var.region-name
+
+  tracking-table-names = [
+    aws_dynamodb_table.jdbc-extract-tracking-table.arn
+  ]
 }

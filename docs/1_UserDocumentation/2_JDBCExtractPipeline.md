@@ -148,7 +148,7 @@ have Docker installed, follow the steps below:
 docker run \
   -v ~/.aws:/root/.aws \
   --rm=true \
-  -e SCRIPT_NAME=jdbc_extract_job.py \
+  -e SCRIPT_NAME=jdbc_dev_extract_job.py \
   -e EDL_TYPE=extract \
   -e DB_ENGINE=postgres \
   -e DB_SECRET=business/accounts\

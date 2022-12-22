@@ -43,12 +43,17 @@ def get_sql_where_condition(
         sql_where_condition = ""
     elif extract_type == "PE":
         if reingest:
-            logging.warning(
-                "Source is being reingested, all original data may be overwritten!"
-            )
-            sql_where_condition = (
-                f"WHERE {hwm_col_name} > '{MIN_VALUES[hwm_column_type]}'"
-            )
+            try:
+                logging.warning(
+                    "Source is being reingested, all original data may be overwritten!"
+                )
+                sql_where_condition = (
+                    f"WHERE {hwm_col_name} > '{MIN_VALUES[hwm_column_type]}'"
+                )
+            except KeyError as err:
+                raise KeyError(
+                    f"The provided hwm_column_type: {hwm_column_type} is not a valid option"
+                ) from err
         else:
             # if hwm is -1 it means we need to pull in all newest data
             if hwm_value == "-1":

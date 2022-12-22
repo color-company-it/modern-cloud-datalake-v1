@@ -7,14 +7,19 @@ repos:
         entry: python scripts/cicd/lambda_layer.py -i codebase/ -o codebase_layer/ -n codebase
         language: system
         pass_filenames: false
-#      - id: wheel-codebase-module
-#        name: wheel-codebase-module
-#        entry: bash setup-whl.sh
-#        language: system
-#        pass_filenames: false
+      - id: wheel-codebase-module
+        name: wheel-codebase-module
+        entry: bash setup-whl.sh
+        language: system
+        pass_filenames: false
       - id: terraform-fmt
         name: terraform-fmt
         entry: terraform fmt -recursive
+        language: system
+        pass_filenames: false
+      - id: pytest
+        name: pytest
+        entry: pytest
         language: system
         pass_filenames: false
   - repo: https://github.com/psf/black

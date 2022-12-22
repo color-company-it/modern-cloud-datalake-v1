@@ -7,6 +7,6 @@ setup(
     name="codebase",
     version="0.1",
     description="Modern Cloud Datalake Codebase",
-    packages=["codebase", "codebase.aws", "codebase.config", "codebase.etl"],
+    packages=["codebase", "codebase.aws", "codebase.etl"],
     install_requires=requirements,
 )

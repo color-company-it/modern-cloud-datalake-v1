@@ -30,3 +30,8 @@ variable "codebase-s3-bucket-name" {
   type        = string
   description = "The Name of the S3 bucket where the Codebase is stored"
 }
+
+variable "tracking-table-names" {
+  type        = list(string)
+  description = "The DDB extract tracking tables name to track ETL processes"
+}

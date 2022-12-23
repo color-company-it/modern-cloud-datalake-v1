@@ -18,19 +18,113 @@ resource "aws_iam_role" "glue-job-role" {
 EOF
 }
 
+data "aws_iam_policy_document" "glue-job-policy" {
+  statement {
+    sid    = "AllowCloudWatchMetrics"
+    effect = "Allow"
+    actions = [
+      "cloudwatch:PutMetricData",
+    ]
+    resources = [
+      "*",
+    ]
+  }
+
+  statement {
+    sid    = "AllowCloudWatchLogs"
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = ["arn:aws:logs:*:*:*"]
+  }
+
+  statement {
+    sid    = "AllowGetSecrets"
+    effect = "Allow"
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:ListSecretVersionIds",
+      "secretsmanager:ListSecrets"
+    ]
+    resources = [
+      "arn:aws:secretsmanager:*:${var.account-id}:secret:*"
+    ]
+  }
+
+  statement {
+    sid    = "AllowS3"
+    effect = "Allow"
+    actions = [
+      "s3:Put*",
+      "s3:Get*",
+      "s3:List*",
+      "s3:Delete*",
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "AllowGlue"
+    effect = "Allow"
+    actions = [
+      "glue:GetConnection*",
+      "glue:*Tag*",
+      "glue:*Table*",
+      "glue:*Partition*",
+      "glue:*Database*"
+    ]
+    resources = [
+      "arn:aws:glue:*:${var.account-id}:table/*/*",
+      "arn:aws:glue:*:${var.account-id}:database/*/*",
+      "arn:aws:glue:*:${var.account-id}:connection/*/*",
+      "arn:aws:glue:*:${var.account-id}:catalog"
+    ]
+  }
+
+  statement {
+    sid    = "AllowGlueListAll"
+    effect = "Allow"
+    actions = [
+      "glue:List*"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "ListAllDDBTables"
+    effect = "Allow"
+    actions = [
+      "dynamodb:ListTables"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "ModifyDDBTrackingTable"
+    effect = "Allow"
+    actions = [
+      "dynamodb:PutItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:Scan",
+      "dynamodb:Query",
+      "dynamodb:Update*",
+      "dynamodb:Create*",
+      "dynamodb:Get*",
+    ]
+    resources = var.tracking-table-names
+  }
+}
+
+
 # IAM policy for the Glue job
 resource "aws_iam_policy" "glue-job-policy" {
   name        = "${var.business-name}-${var.etl-stage}-${var.sdlc-stage}-glue-job-policy"
   description = "Policy for JDBC ${var.etl-stage} ${var.sdlc-stage} Glue job"
 
-  policy = templatefile("${path.module}/iam_role.json", {
-    "region-name" : var.region-name,
-    "account-id" : var.account-id,
-    "script-s3-bucket-name" : var.script-s3-bucket-name,
-    "etl-s3-bucket-name" : var.etl-s3-bucket-name,
-    "codebase-s3-bucket-name" : var.codebase-s3-bucket-name,
-    "etl-stage" : var.etl-stage
-  })
+  policy = data.aws_iam_policy_document.glue-job-policy.json
 }
 
 # Attach the policy to the role

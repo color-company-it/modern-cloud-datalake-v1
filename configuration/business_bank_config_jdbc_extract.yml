@@ -1,0 +1,49 @@
+source_name: "business_bank_config_jdbc_extract"
+extract:
+  job_type: glue # emr, ecs
+  source_type: jdbc # api, file
+  default_arguments:
+    script_name: jdbc_extract_job.py
+    num_partitions: 4
+    fetchsize: 1000
+    extract_type: FE
+  db_engine: postgres # mysql
+  db_secret: postgres/mock_db
+  db_port: 5432
+  db_name: fzmjfsta
+  tables: # this is the extract_table
+    public.accounts:
+      partition_column: AccountID
+      lower_bound: 1
+      upper_bound: 1000
+      extract_type: PE
+      hwm_col_name: AccountID
+      hwm_column_type: IntegerType
+      lwm_value: 1
+      hwm_value: 1000
+      repartition_dataframe: true
+      extract_s3_partitions: AccountType
+      # extract_s3_uri: Defined by the Step Function
+      # num_partitions: Set as default above
+      # fetchsize: Set as default above
+      # reingest: Defined by the Step Function
+      # tracking_table_name: Defined in the infrastructure
+    public.other:
+      partition_column: AccountID
+      lower_bound: 1
+      upper_bound: 1000
+      hwm_col_name: AccountID
+      hwm_column_type: IntegerType
+      lwm_value: 1
+      hwm_value: 1000
+      repartition_dataframe: true
+      extract_s3_partitions: AccountType
+      # extract_s3_uri: Defined by the Step Function
+      # num_partitions: Set as default above
+      # fetchsize: Set as default above
+      # reingest: Defined by the Step Function
+      # tracking_table_name: Defined in the infrastructure
+
+
+
+

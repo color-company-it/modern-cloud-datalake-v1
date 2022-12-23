@@ -167,9 +167,9 @@ docker run \
   -e HWM_VALUE=1000 \
   -e REPARTITION_DATAFRAME=True \
   -e EXTRACT_S3_PARTITIONS=AccountType \
-  -e EXTRACT_S3_URI=dirkscgm-test/ \
+  -e EXTRACT_S3_URI=s3://my-bucket/extract/accounts \
   -e REINGEST=True \
-  -e TRACKING_TABLE_NAME=s3://my-bucket/extract/accounts \
+  -e TRACKING_TABLE_NAME=schema.table \
   etl_jdbc
 ```
 

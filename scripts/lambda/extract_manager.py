@@ -47,7 +47,7 @@ def lambda_handler(event, context):
     for extract_item in _extract_config:
         extract_table = extract_item.get("extract_table")
 
-        # only add to list if ready ot be run
+        # only add to list if ready to be run
         if extract_table in _extract_tables:
             # populate additional data populated by terraform
             extract_item[

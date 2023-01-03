@@ -11,7 +11,7 @@ module "jdbc-glue-job-v1" {
   max-concurrent-runs = 5
   script-location     = "s3://${aws_s3_bucket.scripts-bucket.bucket}/glue/jdbc_${var.sdlc-stage}_${each.value}_job.py"
   codebase            = "s3://${aws_s3_bucket_object.codebase-whl.bucket}/${aws_s3_bucket_object.codebase-whl.key}"
-  tracking-table-name = aws_dynamodb_table.jdbc-extract-tracking-table.name
+  tracking-table-name = aws_dynamodb_table.extract-tracking-table.name
   connections         = []
-  depends_on          = [module.jdbc-glue-iam-roles, aws_dynamodb_table.jdbc-extract-tracking-table]
+  depends_on          = [module.jdbc-glue-iam-roles, aws_dynamodb_table.extract-tracking-table]
 }

@@ -6,13 +6,13 @@ from codebase.config import generate_extract_config
 from codebase.aws.s3 import get_config_from_s3
 
 # items provided as lambda envs
-CONFIG_S3_BUCKET = os.getenv("config-s3-bucket")
-ETL_S3_BUCKET = os.getenv("etl-s3-bucket")
-TRACKING_TABLE_NAME = os.getenv("tracking-table_name")
+CONFIG_S3_BUCKET = os.getenv("config_s3_bucket")
+ETL_S3_BUCKET = os.getenv("etl_s3_bucket")
+TRACKING_TABLE_NAME = os.getenv("tracking_table_name")
 LOGGER = get_logger()
 
 
-def lambda_handler(event, context=None):
+def lambda_handler(event, context):
     """
     This function sends a payload to an AWS Step Function that triggers an extract Glue job.
     The payload contains a list of tables to extract and additional data needed for the job.

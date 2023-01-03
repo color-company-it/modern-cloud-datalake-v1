@@ -1,7 +1,6 @@
 # IAM role for the Glue job
 resource "aws_iam_role" "glue-job-role" {
-  name = "${var.business-name}-${var.etl-stage}-${var.sdlc-stage}-glue-job-role"
-
+  name               = "${var.business-name}-${var.etl-stage}-${var.sdlc-stage}-glue-job-role"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",

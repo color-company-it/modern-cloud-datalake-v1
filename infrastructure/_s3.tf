@@ -82,3 +82,11 @@ resource "aws_s3_bucket_object" "scripts-glue-jdbc-uploads" {
   source   = "${local.repository-layers.scripts}glue/${each.value}"
   etag     = filemd5("${local.repository-layers.scripts}glue/${each.value}")
 }
+
+resource "aws_s3_bucket_object" "scripts-lambda-uploads" {
+  for_each = local.lambda-jdbc-scripts
+  bucket   = aws_s3_bucket.scripts-bucket.bucket
+  key      = "lambda/${each.value}"
+  source   = "${local.repository-layers.scripts}lambda/${each.value}"
+  etag     = filemd5("${local.repository-layers.scripts}lambda/${each.value}")
+}

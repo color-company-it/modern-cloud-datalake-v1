@@ -35,6 +35,7 @@ locals {
   configuration-files = fileset(local.repository-layers.configuration, "*.yaml")
   spark-jdbc-scripts  = fileset("${local.repository-layers.scripts}/spark/", "*")
   glue-jdbc-scripts   = fileset("${local.repository-layers.scripts}/glue/", "*")
+  lambda-jdbc-scripts = fileset("${local.repository-layers.scripts}/lambda/", "*")
 
   /*
   sdlc-stages is a local variable that specifies the different stages of the

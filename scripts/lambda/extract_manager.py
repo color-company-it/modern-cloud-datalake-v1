@@ -14,7 +14,7 @@ LOGGER = get_logger()
 
 def lambda_handler(event, context):
     """
-    This function sends a payload to an AWS Step Function that triggers an extract Glue job.
+    This function sends a payload to an AWS Step Function that triggers an extract job.
     The payload contains a list of tables to extract and additional data needed for the job.
 
 

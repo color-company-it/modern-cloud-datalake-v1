@@ -7,3 +7,4 @@ mysql-connector-python==8.0.31
 psycopg2-binary==2.9.5
 awscli==1.27.33
 wheel
+setuptools~=65.5.1

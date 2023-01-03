@@ -13,6 +13,6 @@ module "jdbc-glue-iam-roles" {
   region-name = var.region-name
 
   tracking-table-names = [
-    aws_dynamodb_table.jdbc-extract-tracking-table.arn
+    aws_dynamodb_table.extract-tracking-table.arn
   ]
 }

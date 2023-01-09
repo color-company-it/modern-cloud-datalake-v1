@@ -30,7 +30,7 @@ COPY scripts/docker/base_pyspark/hadoop/* /opt/hadoop/etc/hadoop/
 COPY scripts/docker/base_pyspark/spark/* /opt/spark/conf/
 
 # Add JDBC Jar Files
-COPY scripts/docker/jars/* /opt/spark/jars/
+COPY scripts/docker/base_pyspark/jars/* /opt/spark/jars/
 
 # Set environment variables
 ENV HADOOP_HOME=/opt/hadoop

@@ -90,3 +90,11 @@ resource "aws_s3_bucket_object" "scripts-lambda-uploads" {
   source   = "${local.repository-layers.scripts}lambda/${each.value}"
   etag     = filemd5("${local.repository-layers.scripts}lambda/${each.value}")
 }
+
+resource "aws_s3_bucket_object" "scripts-docker-uploads" {
+  for_each = local.docker-jdbc-scripts
+  bucket   = aws_s3_bucket.scripts-bucket.bucket
+  key      = "docker/${each.value}"
+  source   = "${local.repository-layers.scripts}docker/${each.value}"
+  etag     = filemd5("${local.repository-layers.scripts}docker/${each.value}")
+}

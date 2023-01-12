@@ -1,9 +1,12 @@
 name: "Deployment"
 
 on:
-  pull_request:
   push:
     branches: [ main ]
+
+env:
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
 jobs:
   pre-commit:
@@ -16,3 +19,27 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - uses: pre-commit/action@v3.0.0
+
+  docker-deploy-base-pyspark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build the Docker image
+          run: |
+            cd scripts/docker/base_pyspark
+            aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com
+            docker build -t base_pyspark:latest .
+            docker tag base_pyspark $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/base_pyspark:latest
+            docker push base_pyspark $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/base_pyspark:latest
+  
+  docker-deploy-etl-jdbc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build the Docker image
+          run: |
+            cd scripts/docker/etl_jdbc
+            aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com
+            docker build -t etl_jdbc:latest .
+            docker tag etl_jdbc $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/etl_jdbc:latest
+            docker push etl_jdbc $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/etl_jdbc:latest

@@ -1,8 +1,13 @@
 import datetime
 import json
+import logging
+import time
 from typing import Any
 
 import boto3
+from botocore.exceptions import ClientError
+
+from codebase.aws import RETRIES, RETRY_CODES, RETRY_DELAY
 
 DDB = boto3.client("dynamodb")
 
@@ -34,6 +39,7 @@ def update_extract_tracking_table(
     :params extract_successful (str): A Y or N to determine if the extract is successful.
     :params tracking_table_name (str): DDB Tracking Table name.
     """
+
     # Define the item to be inserted or updated
     item = {
         "source": {"S": source},
@@ -48,7 +54,20 @@ def update_extract_tracking_table(
     }
 
     # Use the `put_item` method to insert or update the item
-    DDB.put_item(TableName=tracking_table_name, Item=item)
+    for i in range(RETRIES):
+        try:
+            DDB.put_item(TableName=tracking_table_name, Item=item)
+        except ClientError as error:
+            if error.response["Error"]["Code"] in RETRY_CODES:
+                logging.warning(
+                    f"Encountered a retryable error '{error}', retrying in {RETRY_DELAY} seconds"
+                )
+                time.sleep(RETRY_DELAY)
+            else:
+                logging.error(
+                    f"Encountered a non-retryable error '{error}', raising exception"
+                )
+                raise
 
 
 def get_tracking_table_item(source: str, tracking_table_name: str) -> dict:
@@ -60,11 +79,24 @@ def get_tracking_table_item(source: str, tracking_table_name: str) -> dict:
     :returns: The item, as a dictionary. If the item does not exist, returns False.
     """
 
-    # Define the key of the item to be retrieved
-    key = {"source": {"S": source}}
+    for i in range(RETRIES):
+        try:
+            # Define the key of the item to be retrieved
+            key = {"source": {"S": source}}
 
-    # Use the `get_item` method to retrieve the item
-    response = DDB.get_item(TableName=tracking_table_name, Key=key)
+            # Use the `get_item` method to retrieve the item
+            response = DDB.get_item(TableName=tracking_table_name, Key=key)
 
-    # Return the item if it exists, or None if it doesn't
-    return response.get("Item", False)
+            # Return the item if it exists, or None if it doesn't
+            return response.get("Item", False)
+        except ClientError as error:
+            if error.response["Error"]["Code"] in RETRY_CODES:
+                logging.warning(
+                    f"encountered a retryable error '{error}', retrying in {RETRY_DELAY} seconds"
+                )
+                time.sleep(RETRY_DELAY)
+            else:
+                logging.error(
+                    f"Encountered a non-retryable error '{error}', raising exception"
+                )
+                raise

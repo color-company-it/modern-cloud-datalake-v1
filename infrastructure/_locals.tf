@@ -32,6 +32,7 @@ locals {
   This local can be used to access the set of configuration files in the
   Terraform code.
   */
+  codebase-files      = fileset(local.repository-layers.codebase, "*/**")
   configuration-files = fileset(local.repository-layers.configuration, "*.yml")
   spark-jdbc-scripts  = fileset("${local.repository-layers.scripts}/spark/", "**")
   glue-jdbc-scripts   = fileset("${local.repository-layers.scripts}/glue/", "**")

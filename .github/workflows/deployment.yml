@@ -25,21 +25,21 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Build the Docker image
-          run: |
-            cd scripts/docker/base_pyspark
-            aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com
-            docker build -t base_pyspark:latest .
-            docker tag base_pyspark $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/base_pyspark:latest
-            docker push base_pyspark $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/base_pyspark:latest
+        run: |
+          cd scripts/docker/base_pyspark
+          aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com
+          docker build -t base_pyspark:latest .
+          docker tag base_pyspark $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/base_pyspark:latest
+          docker push base_pyspark $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/base_pyspark:latest
   
   docker-deploy-etl-jdbc:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Build the Docker image
-          run: |
-            cd scripts/docker/etl_jdbc
-            aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com
-            docker build -t etl_jdbc:latest .
-            docker tag etl_jdbc $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/etl_jdbc:latest
-            docker push etl_jdbc $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/etl_jdbc:latest
+        run: |
+          cd scripts/docker/etl_jdbc
+          aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com
+          docker build -t etl_jdbc:latest .
+          docker tag etl_jdbc $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/etl_jdbc:latest
+          docker push etl_jdbc $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/etl_jdbc:latest

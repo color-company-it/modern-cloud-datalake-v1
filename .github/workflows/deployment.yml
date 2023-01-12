@@ -3,13 +3,12 @@ name: "Deployment"
 on:
   push:
     branches: [ main ]
-
-env:
-  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+  workflow_dispatch:
+    branches: [ main ]
 
 jobs:
   pre-commit:
+    name: Run Pre-Commit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -21,25 +20,66 @@ jobs:
       - uses: pre-commit/action@v3.0.0
 
   docker-deploy-base-pyspark:
+    name: Deploy base_pyspark
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Build the Docker image
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.SECRET_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push the image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.com
+          ECR_REPOSITORY: base-pyspark
+          IMAGE_TAG: ${{ github.sha }}
         run: |
           cd scripts/docker/base_pyspark
-          aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com
-          docker build -t base_pyspark:latest .
-          docker tag base_pyspark $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/base_pyspark:latest
-          docker push base_pyspark $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/base_pyspark:latest
-  
+          # Build a docker container and push it to ECR 
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          echo "Pushing image to ECR..."
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
   docker-deploy-etl-jdbc:
+    needs: docker-deploy-base-pyspark
+    name: Deploy etl_jdbc
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Build the Docker image
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.SECRET_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push the image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.com
+          ECR_REPOSITORY: etl-jdbc
+          IMAGE_TAG: ${{ github.sha }}
         run: |
           cd scripts/docker/etl_jdbc
-          aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com
-          docker build -t etl_jdbc:latest .
-          docker tag etl_jdbc $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/etl_jdbc:latest
-          docker push etl_jdbc $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.com/etl_jdbc:latest
+          # Build a docker container and push it to ECR 
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          echo "Pushing image to ECR..."
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT

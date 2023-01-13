@@ -1,3 +1,15 @@
+/*
+This Terraform module creates resources to deploy two Docker images to ECR registry,
+one for "base-pyspark" and another for "etl-jdbc". It also triggers two CodeBuild
+projects using a Lambda function, one for each image.
+
+It utilizes the codebuild_docker_deploy module to create the CodeBuild projects and
+the necessary resources for deployment. Additionally, it creates two S3 bucket objects
+for additional source codebase and scripts for the "etl-jdbc" project.
+ToDo: Consolidate all resources for the docker to access when required, as opposed to
+      bringing them in with the aws_s3_bucket_object resource.
+*/
+
 module "codebuild-base-pyspark" {
   source       = "./modules/codebuild_docker_deploy"
   project-name = "${var.business-name}-${var.sdlc-stage}-base-pyspark"
@@ -6,7 +18,7 @@ module "codebuild-base-pyspark" {
   iam-role-arn = aws_iam_role.codebuild-role.arn
   s3-bucket    = aws_s3_bucket.scripts-bucket
   s3-prefix    = "docker/base_pyspark/"
-  tags         = {}
+  lambda-role  = aws_iam_role.lambda-role
 }
 
 resource "aws_s3_bucket_object" "codebuild-etl-jdbc-additional-source-codebase" {
@@ -33,5 +45,5 @@ module "codebuild-etl-jdbc" {
   iam-role-arn = aws_iam_role.codebuild-role.arn
   s3-bucket    = aws_s3_bucket.scripts-bucket
   s3-prefix    = "docker/etl_jdbc/"
-  tags         = {}
+  lambda-role  = aws_iam_role.lambda-role
 }

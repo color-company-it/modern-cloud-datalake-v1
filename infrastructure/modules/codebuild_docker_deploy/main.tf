@@ -48,4 +48,38 @@ resource "aws_codebuild_project" "docker-deploy" {
   tags = var.tags
 }
 
-# ToDo create lambda put event trigger
+data "archive_file" "codebuild-lambda-script" {
+  type             = "zip"
+  source_file      = "lambda_function.py"
+  output_path      = "lambda_function.zip"
+  output_file_mode = "0666"
+}
+
+resource "aws_lambda_function" "codebuild-lambda" {
+  function_name    = "${var.project-name}-codebuild"
+  role             = var.lambda-role
+  filename         = data.archive_file.codebuild-lambda-script.output_path
+  source_code_hash = filebase64sha256(data.archive_file.codebuild-lambda-script.output_path)
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.8"
+  timeout          = 120
+  memory_size      = 128
+
+  environment {
+    variables = {
+      PROJECT_NAME = var.project-name
+    }
+  }
+
+  layers = var.lambda-layers
+}
+
+resource "aws_s3_bucket_notification" "put-event" {
+  bucket = var.s3-bucket.id
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.codebuild-lambda.arn
+    events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+    filter_prefix       = var.s3-prefix
+  }
+}

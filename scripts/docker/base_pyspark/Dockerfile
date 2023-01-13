@@ -22,15 +22,15 @@ RUN curl https://archive.apache.org/dist/spark/spark-3.1.1/spark-3.1.1-bin-hadoo
 FROM pyspark_layer as base_pyspark
 
 # Install Python requirments.txt
-COPY ../../../requirements.txt ./
+COPY requirements.txt ./
 RUN pip3 install -r requirements.txt
 
 # Add Hadoop and Spark configuration files
-COPY scripts/docker/base_pyspark/hadoop/* /opt/hadoop/etc/hadoop/
-COPY scripts/docker/base_pyspark/spark/* /opt/spark/conf/
+COPY hadoop/* /opt/hadoop/etc/hadoop/
+COPY spark/* /opt/spark/conf/
 
 # Add JDBC Jar Files
-COPY scripts/docker/base_pyspark/jars/* /opt/spark/jars/
+COPY jars/* /opt/spark/jars/
 
 # Set environment variables
 ENV HADOOP_HOME=/opt/hadoop

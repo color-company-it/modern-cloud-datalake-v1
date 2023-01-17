@@ -4,12 +4,7 @@ repos:
     hooks:
       - id: package-codebase-lambda-layer
         name: package-codebase-lambda-layer
-        entry: python scripts/cicd/lambda_layer.py -i codebase/ -o codebase_layer/ -n codebase
-        language: system
-        pass_filenames: false
-      - id: wheel-codebase-module
-        name: wheel-codebase-module
-        entry: bash setup-whl.sh
+        entry: python scripts/cicd/lambda_layer.py -i codebase/ -o infrastructure/lambda_layers/codebase/ -n codebase
         language: system
         pass_filenames: false
       - id: terraform-fmt

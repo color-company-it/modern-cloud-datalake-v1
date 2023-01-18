@@ -21,6 +21,14 @@ module "config_bucket" {
   use_case   = "config"
 }
 
+resource "aws_s3_bucket_object" "configs" {
+  for_each    = fileset("${path.root}/../configuration/", "*.yml")
+  bucket      = module.config_bucket.bucket
+  key         = each.key
+  source      = "${path.root}/../configuration/${each.key}"
+  source_hash = filemd5("${path.root}/../configuration/${each.key}")
+}
+
 module "scripts_bucket" {
   source = "./modules/s3_bucket"
 

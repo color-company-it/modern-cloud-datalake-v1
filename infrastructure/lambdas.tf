@@ -8,15 +8,15 @@ data "archive_file" "codebase_layer" {
 resource "aws_lambda_layer_version" "codebase_layer" {
   layer_name          = "${var.project_name}_${var.sdlc_stage}_codebase_layer"
   filename            = data.archive_file.codebase_layer.output_path
-  compatible_runtimes = ["python3.8"]
+  compatible_runtimes = [var.python_version]
 
   description = "Data Lake CodeBase Layer"
 }
 
 resource "aws_lambda_layer_version" "datalake_layer" {
   layer_name          = "${var.project_name}_${var.sdlc_stage}_datalake_layer"
-  filename            = data.archive_file.codebase_layer.output_path
-  compatible_runtimes = ["python3.8"]
+  filename            = "${path.module}/lambda_layers/datalake_layer.zip"
+  compatible_runtimes = [var.python_version]
 
   description = "Data Lake Additional Layer with tools like requests and pyyaml"
 }
@@ -34,7 +34,7 @@ resource "aws_lambda_function" "lambda_functions" {
   function_name    = "${var.project_name}_${var.sdlc_stage}_${replace(each.value, ".zip", "")}"
   role             = module.lambda_service_role.role_arn
   handler          = "${replace(each.value, ".zip", "")}.lambda_handler"
-  runtime          = "python3.8"
+  runtime          = var.python_version
   timeout          = 30
   filename         = "${path.root}/../scripts/lambdas/${each.value}"
   source_code_hash = filebase64sha256("${path.root}/../scripts/lambdas/${each.value}")

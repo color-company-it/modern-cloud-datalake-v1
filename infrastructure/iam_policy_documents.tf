@@ -5,8 +5,12 @@ data "aws_iam_policy_document" "custom_lambda_policy" {
     actions = [
       "s3:Put*",
       "s3:Delete*",
+      "s3:Get*"
     ]
-    resources = ["*"]
+    resources = [
+      module.config_bucket.arn,
+      "${module.config_bucket.arn}/*"
+    ]
   }
 
   statement {

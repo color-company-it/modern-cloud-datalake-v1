@@ -2,13 +2,16 @@ import json
 import os
 
 from codebase import get_logger
-from codebase.config import generate_extract_config
 from codebase.aws.s3 import get_config_from_s3
+from codebase.config import generate_extract_config
 
 # items provided as lambda envs
+REGION_NAME = os.getenv("region_name")
+SDLC_STAGE = os.getenv("sdlc_stage")
+ACCOUNT_ID = os.getenv("account_id")
 CONFIG_S3_BUCKET = os.getenv("config_s3_bucket")
-ETL_S3_BUCKET = os.getenv("etl_s3_bucket")
-TRACKING_TABLE_NAME = os.getenv("tracking_table_name")
+EXTRACT_S3_BUCKET = os.getenv("extract_s3_bucket")
+EXTRACT_TRACKING_TABLE = os.getenv("extract_tracking_table")
 LOGGER = get_logger()
 
 
@@ -34,16 +37,20 @@ def lambda_handler(event, context):
     """
     LOGGER.info(f"Event: {event}")
 
+    _extract_tables = event["extract_tables"]
+    _source_name = event["source_name"]
+
     _extract_config = get_config_from_s3(
-        bucket_name=CONFIG_S3_BUCKET, file_name=f"{event['source_name']}.yml"
+        bucket_name=CONFIG_S3_BUCKET, file_name=f"{_source_name}.yml"
     )
     LOGGER.info(f"Received config object: {_extract_config}")
 
     _extract_config = generate_extract_config(_extract_config)
-    _extract_tables = event["extract_tables"]
 
-    _tables_to_extract = []  # a list to send to the AWS Step Function Map
-    _tables_not_to_extract = []
+    _tables_to_extract, _tables_not_to_extract = (
+        [],
+        [],
+    )  # a list to send to the AWS Step Function Map
     for extract_item in _extract_config:
         extract_table = extract_item.get("extract_table")
 
@@ -52,8 +59,8 @@ def lambda_handler(event, context):
             # populate additional data populated by terraform
             extract_item[
                 "extract_s3_uri"
-            ] = f"s3://{ETL_S3_BUCKET}/extract/{extract_item['db_name']}/{extract_item['extract_table'].replace('.', '/')}/"
-            extract_item["tracking_table_name"] = TRACKING_TABLE_NAME
+            ] = f"s3://{EXTRACT_S3_BUCKET}/{extract_item['db_name']}/{extract_item['extract_table'].replace('.', '/')}/"
+            extract_item["tracking_table_name"] = EXTRACT_TRACKING_TABLE
             _tables_to_extract.append(extract_item)
         else:
             _tables_not_to_extract.append(extract_table)
@@ -62,6 +69,6 @@ def lambda_handler(event, context):
         f"The extract_table(s) {_tables_not_to_extract} will not be extracted in this run"
     )
 
-    _return = {"status": 200, "tables_to_extract": _tables_to_extract}
+    _return = {"status_code": 200, "tables_to_extract": _tables_to_extract}
     LOGGER.info(f"Return: {_return}")
     return json.dumps(_return)

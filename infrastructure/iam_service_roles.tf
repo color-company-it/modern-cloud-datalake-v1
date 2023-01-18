@@ -17,3 +17,12 @@ resource "aws_iam_role_policy_attachment" "custom_lambda_policy" {
   role       = module.lambda_service_role.role_name
   policy_arn = aws_iam_policy.custom_lambda_policy.arn
 }
+
+module "glue_service_role" {
+  source            = "./modules/iam_service_role"
+  name              = var.project_name
+  region_name       = var.region_name
+  aws_resource_name = "glue"
+  kms_arns          = [aws_kms_key.default.arn]
+  sdlc_stage        = var.sdlc_stage
+}

@@ -3,7 +3,7 @@ variable "region_name" {
 }
 
 variable "project_name" {
-  default = "dirk-test"
+  default = "dirk_test"
 }
 
 variable "sdlc_stage" {

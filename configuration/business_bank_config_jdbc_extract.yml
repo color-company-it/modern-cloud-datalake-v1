@@ -2,11 +2,14 @@ source_name: "business_bank_config_jdbc_extract"
 extract:
   job_type: glue # emr, ecs
   source_type: jdbc # api, file
+  script_name: jdbc_extract_job.py
+  arguments:
+    --test: 1
   default_arguments:
-    script_name: jdbc_extract_job.py
     num_partitions: 4
     fetchsize: 1000
     extract_type: FE
+    worker_no: 2
   db_engine: postgres # mysql
   db_secret: postgres/mock_db
   db_port: 5432
@@ -43,7 +46,13 @@ extract:
       # fetchsize: Set as default above
       # reingest: Defined by the Step Function
       # tracking_table_name: Defined in the infrastructure
-
-
-
-
+#transform:
+#  job_type: glue # emr, ecs
+#  script_name: jdbc_transform_job.py
+#  arguments:
+#    --test: 1
+#load:
+#  job_type: glue # emr, ecs
+#  script_name: jdbc_load_job.py
+#  arguments:
+#    --test: 1

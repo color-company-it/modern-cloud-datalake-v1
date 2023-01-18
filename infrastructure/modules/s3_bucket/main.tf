@@ -10,4 +10,10 @@ resource "aws_s3_bucket" "self" {
       }
     }
   }
+
+  tags = {
+    bucket_name = "${var.name}-${var.use_case}-${var.sdlc_stage}"
+    use_case    = var.use_case
+    sdlc_stage  = var.sdlc_stage
+  }
 }

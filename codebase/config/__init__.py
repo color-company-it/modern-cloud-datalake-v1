@@ -39,7 +39,7 @@ def generate_extract_config(config) -> list:
             "extract_s3_partitions": default("extract_s3_partitions"),
             "num_partitions": default("num_partitions"),
             "fetchsize": default("fetchsize"),
-            "worker_no": default("worker_no"),
+            "worker_no": int(default("worker_no")),  # needs to be int for sf payload
             "worker_type": default("worker_type"),
         }
         event_arguments.append(config)

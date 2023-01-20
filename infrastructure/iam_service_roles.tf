@@ -27,6 +27,17 @@ module "glue_service_role" {
   sdlc_stage        = var.sdlc_stage
 }
 
+resource "aws_iam_policy" "custom_glue_policy" {
+  name        = "${var.project_name}_${var.sdlc_stage}_custom_glue_policy"
+  description = "Policy for ${var.sdlc_stage} ${var.project_name}"
+  policy      = data.aws_iam_policy_document.custom_glue_policy.json
+}
+
+resource "aws_iam_role_policy_attachment" "custom_glue_policy" {
+  role       = module.glue_service_role.role_name
+  policy_arn = aws_iam_policy.custom_glue_policy.arn
+}
+
 module "state_machine_service_role" {
   source            = "./modules/iam_service_role"
   name              = var.project_name

@@ -32,12 +32,12 @@ resource "aws_glue_job" "extract_job" {
   }
 
   command {
-    script_location = "s3:://${var.script_bucket_name}/${aws_s3_bucket_object.extract_script[count.index].key}"
+    script_location = "s3://${var.script_bucket_name}/${aws_s3_bucket_object.extract_script[count.index].key}"
   }
 
   default_arguments = merge({
-    "--job_language"   = "python"
-    "--extra-py-files" = var.extra_py_files
+    "--job_language" = "python"
+    #    "--extra-py-files" = var.extra_py_files
     },
     local.configuration.extract.arguments
   )
@@ -81,12 +81,12 @@ resource "aws_glue_job" "transform_job" {
   }
 
   command {
-    script_location = "s3:://${var.script_bucket_name}/${aws_s3_bucket_object.transform_script[count.index].key}"
+    script_location = "s3://${var.script_bucket_name}/${aws_s3_bucket_object.transform_script[count.index].key}"
   }
 
   default_arguments = merge({
-    "--job_language"   = "python"
-    "--extra-py-files" = var.extra_py_files
+    "--job_language" = "python"
+    #    "--extra-py-files" = var.extra_py_files
     },
     local.configuration.transform.arguments
   )
@@ -130,12 +130,12 @@ resource "aws_glue_job" "load_job" {
   }
 
   command {
-    script_location = "s3:://${var.script_bucket_name}/${aws_s3_bucket_object.load_script[count.index].key}"
+    script_location = "s3://${var.script_bucket_name}/${aws_s3_bucket_object.load_script[count.index].key}"
   }
 
   default_arguments = merge({
-    "--job_language"   = "python"
-    "--extra-py-files" = var.extra_py_files
+    "--job_language" = "python"
+    #    "--extra-py-files" = var.extra_py_files
     },
     local.configuration.load.arguments
   )

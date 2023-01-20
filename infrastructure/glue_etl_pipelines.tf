@@ -10,7 +10,6 @@ module "glue_etl_pipelines" {
   script_dir         = "${path.root}/../scripts/etl/"
   script_bucket_name = module.scripts_bucket.bucket
 
-  extra_py_files        = ""
   extract_job_timeout   = 60
   load_job_timeout      = 60
   transform_job_timeout = 60

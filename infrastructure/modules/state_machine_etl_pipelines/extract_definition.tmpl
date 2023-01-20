@@ -53,7 +53,8 @@
             "Parameters": {
               "JobName": "${glue_job_name}",
               "NumberOfWorkers.$": "$.worker_no",
-              "Arguments.$": {
+              "WorkerType.$": "$.worker_type",
+              "Arguments": {
                 "--extract_table.$": "$.extract_table",
                 "--job_type.$": "$.job_type",
                 "--source_type.$": "$.source_type",

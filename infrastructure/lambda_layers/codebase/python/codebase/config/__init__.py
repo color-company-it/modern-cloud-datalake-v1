@@ -11,10 +11,12 @@ def generate_extract_config(config) -> list:
     def default(item):
         """
         The tracking_table_config will always overwrite the default argument.
+        Payloads can not be integers, so convert them to strings
         """
         if table_config.get(item, False):
-            return table_config[item]
-        return defaults[item]
+            return str(table_config[item])
+        else:
+            return str(defaults[item])
 
     for table_name, table_config in extract["tables"].items():
         config = {
@@ -24,7 +26,7 @@ def generate_extract_config(config) -> list:
             "--source_type": extract["source_type"],
             "--db_engine": extract["db_engine"],
             "--db_secret": extract["db_secret"],
-            "--db_port": extract["db_port"],
+            "--db_port": f'{extract["db_port"]}',
             "--db_name": extract["db_name"],
             # opt for default arguments
             "--partition_column": default("partition_column"),

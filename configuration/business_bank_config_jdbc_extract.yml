@@ -12,6 +12,7 @@ extract:
     fetchsize: "1000"
     extract_type: "FE"
     worker_no: "2"
+    worker_type: "Standard"
   db_engine: "postgres" # mysql
   db_secret: "postgres/mock_db"
   db_port: "5432"

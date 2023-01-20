@@ -52,7 +52,30 @@
             "Resource": "arn:aws:states:::glue:startJobRun",
             "Parameters": {
               "JobName": "${glue_job_name}",
-              "Arguments.$": "$"
+              "NumberOfWorkers.$": "$.worker_no",
+              "Arguments.$": {
+                "--extract_table.$": "$.extract_table",
+                "--job_type.$": "$.job_type",
+                "--source_type.$": "$.source_type",
+                "--db_engine.$": "$.db_engine",
+                "--db_secret.$": "$.db_secret",
+                "--db_port.$": "$.db_port",
+                "--db_name.$": "$.db_name",
+                "--partition_column.$": "$.partition_column",
+                "--lower_bound.$": "$.lower_bound",
+                "--upper_bound.$": "$.upper_bound",
+                "--extract_type.$": "$.extract_type",
+                "--hwm_col_name.$": "$.hwm_col_name",
+                "--hwm_column_type.$": "$.hwm_column_type",
+                "--lwm_value.$": "$.lwm_value",
+                "--hwm_value.$": "$.hwm_value",
+                "--repartition_dataframe.$": "$.repartition_dataframe",
+                "--extract_s3_partitions.$": "$.extract_s3_partitions",
+                "--num_partitions.$": "$.num_partitions",
+                "--fetchsize.$": "$.fetchsize",
+                "--extract_s3_uri.$": "$.extract_s3_uri",
+                "--tracking_table_name.$": "$.tracking_table_name"
+              }
             },
             "End": true,
             "Comment": "Run extract for the provided table.",

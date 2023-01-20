@@ -191,7 +191,7 @@ if __name__ == "__main__":
     parser.add_argument("--db_engine", type=str, help="Database engine")
     parser.add_argument("--db_secret", type=str, help="AWS SecretsManager name")
     parser.add_argument("--db_host", type=str, help="Database host")
-    parser.add_argument("--db_port", type=int, help="Database port")
+    parser.add_argument("--db_port", type=str, help="Database port")
     parser.add_argument("--db_name", type=str, help="Database name")
     parser.add_argument("--partition_column", type=str, help="Partition column")
     parser.add_argument("--hwm_column_type", type=str, help="HWM column type")

@@ -1,4 +1,4 @@
-module "etl_pipelines" {
+module "glue_etl_pipelines" {
   for_each = fileset("${path.root}/../configuration/", "*.yml")
   source   = "./modules/glue_etl_pipelines"
 
@@ -17,4 +17,8 @@ module "etl_pipelines" {
 
   max_concurrent_runs = 2
   number_of_workers   = 2
+
+  extract_bucket_name   = module.etl_buckets["extract"].bucket
+  load_bucket_name      = module.etl_buckets["transform"].bucket
+  transform_bucket_name = module.etl_buckets["load"].bucket
 }

@@ -1,4 +1,6 @@
 source_name: "business_bank_config_jdbc_extract"
+source_owners:
+  - dirkscgm@gmail.com
 extract:
   job_type: glue # emr, ecs
   source_type: jdbc # api, file

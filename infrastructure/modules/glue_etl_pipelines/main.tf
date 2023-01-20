@@ -36,10 +36,8 @@ resource "aws_glue_job" "extract_job" {
   }
 
   default_arguments = merge({
-    "--job_language"                     = "python"
-    "--enable-continuous-cloudwatch-log" = "true"
-    "--enable-continuous-log-filter"     = "true"
-    "--extra-py-files"                   = var.extra_py_files
+    "--job_language"   = "python"
+    "--extra-py-files" = var.extra_py_files
     },
     local.configuration.extract.arguments
   )
@@ -48,6 +46,15 @@ resource "aws_glue_job" "extract_job" {
     source        = local.source_name
     sdlc_stage    = var.sdlc_stage
     glue_job_name = "${local.glue_job_name}_extract"
+  }
+}
+
+resource "aws_glue_crawler" "extract_crawler" {
+  database_name = "${local.glue_job_name}_extract"
+  name          = "${local.glue_job_name}_extract"
+  role          = var.glue_role_arn
+  s3_target {
+    path = "s3://${var.extract_bucket_name}/${local.source_name}/"
   }
 }
 
@@ -78,10 +85,8 @@ resource "aws_glue_job" "transform_job" {
   }
 
   default_arguments = merge({
-    "--job_language"                     = "python"
-    "--enable-continuous-cloudwatch-log" = "true"
-    "--enable-continuous-log-filter"     = "true"
-    "--extra-py-files"                   = var.extra_py_files
+    "--job_language"   = "python"
+    "--extra-py-files" = var.extra_py_files
     },
     local.configuration.transform.arguments
   )
@@ -90,6 +95,15 @@ resource "aws_glue_job" "transform_job" {
     source        = local.source_name
     sdlc_stage    = var.sdlc_stage
     glue_job_name = "${local.glue_job_name}_transform"
+  }
+}
+
+resource "aws_glue_crawler" "transform_crawler" {
+  database_name = "${local.glue_job_name}_transform"
+  name          = "${local.glue_job_name}_transform"
+  role          = var.glue_role_arn
+  s3_target {
+    path = "s3://${var.transform_bucket_name}/${local.source_name}/"
   }
 }
 
@@ -120,10 +134,8 @@ resource "aws_glue_job" "load_job" {
   }
 
   default_arguments = merge({
-    "--job_language"                     = "python"
-    "--enable-continuous-cloudwatch-log" = "true"
-    "--enable-continuous-log-filter"     = "true"
-    "--extra-py-files"                   = var.extra_py_files
+    "--job_language"   = "python"
+    "--extra-py-files" = var.extra_py_files
     },
     local.configuration.load.arguments
   )
@@ -135,5 +147,11 @@ resource "aws_glue_job" "load_job" {
   }
 }
 
-
-
+resource "aws_glue_crawler" "load_crawler" {
+  database_name = "${local.glue_job_name}_load"
+  name          = "${local.glue_job_name}_load"
+  role          = var.glue_role_arn
+  s3_target {
+    path = "s3://${var.load_bucket_name}/${local.source_name}/"
+  }
+}

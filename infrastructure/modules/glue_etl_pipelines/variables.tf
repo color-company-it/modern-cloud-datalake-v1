@@ -45,3 +45,15 @@ variable "load_job_timeout" {
 variable "script_bucket_name" {
   description = "S3 bucket where the scripts are stored"
 }
+
+variable "extract_bucket_name" {
+  description = "S3 bucket where the extract data is stored"
+}
+
+variable "transform_bucket_name" {
+  description = "S3 bucket where the transform data is stored"
+}
+
+variable "load_bucket_name" {
+  description = "S3 bucket where the load data is stored"
+}

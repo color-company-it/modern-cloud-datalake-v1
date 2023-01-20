@@ -32,3 +32,30 @@ data "aws_iam_policy_document" "custom_lambda_policy" {
     ]
   }
 }
+
+data "aws_iam_policy_document" "custom_step_function_policy" {
+  statement {
+    sid    = "AllowGlueStart"
+    effect = "Allow"
+    actions = [
+      "glue:StartJobRun",
+      "glue:GetJobRun",
+      "glue:GetJob",
+      "glue:BatchStopJobRun"
+    ]
+    resources = [
+      "*"
+    ]
+  }
+
+  statement {
+    sid    = "AllowLambdaStart"
+    effect = "Allow"
+    actions = [
+      "lambda:InvokeFunction"
+    ]
+    resources = [
+      "*"
+    ]
+  }
+}

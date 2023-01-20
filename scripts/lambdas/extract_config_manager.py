@@ -71,4 +71,4 @@ def lambda_handler(event, context):
 
     _return = {"status_code": 200, "tables_to_extract": _tables_to_extract}
     LOGGER.info(f"Return: {_return}")
-    return json.dumps(_return)
+    return _return

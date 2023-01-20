@@ -1,0 +1,118 @@
+{
+  "Comment": "Extract Pipeline for ${name}",
+  "StartAt": "Extract Config Manager",
+  "States": {
+    "Extract Config Manager": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload.tables_to_extract",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "${lambda_extract_config_manager_arn}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Comment": "Consume the event payload and construct the input argument for the Extract Jobs",
+      "Next": "Iterate Through Extract Tables"
+    },
+    "Iterate Through Extract Tables": {
+      "Type": "Map",
+      "ItemProcessor": {
+        "ProcessorConfig": {
+          "Mode": "INLINE"
+        },
+        "StartAt": "Choose Job Type",
+        "States": {
+          "Choose Job Type": {
+            "Type": "Choice",
+            "Choices": [
+              {
+                "Variable": "$.job_type",
+                "StringEquals": "glue",
+                "Next": "Glue Start Extract Job Run",
+                "Comment": "Run Glue Extract Job"
+              }
+            ],
+            "Default": "Handle Extract Job Run Status",
+            "Comment": "Choice for Glue, EMR, and ECS"
+          },
+          "Glue Start Extract Job Run": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::glue:startJobRun",
+            "Parameters": {
+              "JobName": "${glue_job_name}",
+              "Arguments.$": "$"
+            },
+            "End": true,
+            "Comment": "Run extract for the provided table.",
+            "Catch": [
+              {
+                "ErrorEquals": [
+                  "Glue.AWSGlueException"
+                ],
+                "Comment": "Catch Glue Errors",
+                "Next": "Handle Extract Job Run Status"
+              }
+            ]
+          },
+          "Handle Extract Job Run Status": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "OutputPath": "$",
+            "Parameters": {
+              "Payload.$": "$",
+              "FunctionName": "${lambda_handle_step_function_status_arn}"
+            },
+            "Retry": [
+              {
+                "ErrorEquals": [
+                  "Lambda.ServiceException",
+                  "Lambda.AWSLambdaException",
+                  "Lambda.SdkClientException",
+                  "Lambda.TooManyRequestsException"
+                ],
+                "IntervalSeconds": 2,
+                "MaxAttempts": 6,
+                "BackoffRate": 2
+              }
+            ],
+            "End": true,
+            "Comment": "Handles all Statuses of the Step Function"
+          }
+        }
+      },
+      "InputPath": "$",
+      "Next": "Update Extract Tables"
+    },
+    "Update Extract Tables": {
+      "Type": "Task",
+      "Next": "Publish to Source Owner Topic",
+      "Parameters": {
+        "Name": "${glue_crawler_name}"
+      },
+      "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+      "Comment": "Update Extract Tables"
+    },
+    "Publish to Source Owner Topic": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${source_topic_arn}",
+        "Message.$": "$"
+      },
+      "End": true,
+      "Comment": "Publish Job Run Status to the Specific Onwers"
+    }
+  }
+}

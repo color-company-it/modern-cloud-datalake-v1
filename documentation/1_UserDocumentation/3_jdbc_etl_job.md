@@ -1,15 +1,45 @@
-# 1.2 JDBC Extract Pipeline
+# Extract
 
-The Data Lake is split up into three major parts, the Extract Pipeline, Transform Pipeline and Load Pipeline.
-Each of which have a vanilla PySpark script for EMR and any other solution. There is an equal Glue version of the same
-script, however it does not make explicit use of the Glue Context.
+## AWS Glue
 
-## jdbc_extract_job.py
+The Spark script is a Glue Job using PySpark that is used to extract data from a JDBC source and save it to a DynamoDB
+table using non-parallel methods. The script supports full extracts and partial extracts, and can be used to continue
+with the extract on the next run, or reingest or rerun based on the success of the pipeline. The script supports the
+following JDBC engines: postgres and mysql.
+
+The script starts by importing necessary modules such as GlueContext, transforms, SparkContext, and DataFrame from the
+awsglue package and functions and other required modules from the codebase package.
+
+The script defines a main() function that starts by fetching the tracking table item using the get_tracking_table_item
+function from the codebase.aws.ddb package. Then it calls the determine_extract_plan function from the
+codebase.etl.extract package to determine the extract plan, passing it necessary parameters like provided_hwm_value,
+provided_lwm_value, extract_type and the tracking_table.
+
+The script then updates the tracking table with new or existing data using the update_extract_tracking_table function
+from the codebase.aws.ddb package. If the row_count is -1 it means the pipeline is running OR it failed during the last
+run.
+
+It then creates a JDBC url using the get_jdbc_url function from the codebase.etl.extract package, and a SQL where
+condition using the get_sql_where_condition function from the same package. It also converts the database namespaces
+using the convert_db_namespaces function and gets the pushdown query using the get_pushdown_query function.
+
+The script then creates the JDBC parameters, that includes url, properties, table, and assigns it to _jdbc_params. The
+properties includes the user, password, driver, encrypt, trustServerCertificate, and applicationIntent.
+
+The script then creates the source schema using the create_db_table_schema function from the codebase.etl.extract
+package and assigns it to source_schema.
+
+The script then creates a Glue DynamicFrame using the glueContext.create_dynamic_frame.from_options method and passing
+it the JDBC parameters and the source schema.
+
+The script then performs a repartition operation on the DynamicFrame using the repartition_dataframe parameter passed to
+it, and uses the num_partitions parameter to determine the number of partitions to be used.
+
+### Glue Job in Detail:
 
 The `main()` function in this Spark JDBC extract code is responsible for extracting data from a JDBC source and saving
-it
-to a DynamoDB table. The extract can be either a full extract or a partial extract, and can be resumed on the next run
-or rerun based on the success of the pipeline.
+it to a DynamoDB table. The extract can be either a full extract or a partial extract, and can be resumed on the next
+run or rerun based on the success of the pipeline.
 
 The function first retrieves the tracking table item from DynamoDB, and then determines the extract plan based on the
 provided extract type, high and low watermark values, and the tracking table. The tracking table is then updated with
@@ -30,9 +60,8 @@ passed as arguments. The number of partitions is calculated based on the sample 
 using the `repartition()` method of the DataFrame class.
 
 Finally, the data is written to DynamoDB using `the write.dynamodb()` method of the DataFrameWriter class, with the
-target
-table and mode specified as arguments. The number of rows extracted is then updated in the tracking table, along with a
-flag indicating that the extract was successful.
+target table and mode specified as arguments. The number of rows extracted is then updated in the tracking table,
+along with a flag indicating that the extract was successful.
 
 | Argument              | Type | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 |-----------------------|------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -60,131 +89,24 @@ flag indicating that the extract was successful.
 | extract_s3_uri        | str  | The extract_s3_uri argument is the location in S3 where the extracted data will be saved. It is a string in the format `s3://<bucket_name>/<path_to_folder>`.                                                                                                                                                                                                                                                                                                                                                                                                      |
 | extract_s3_partitions | str  | A comma separated list of fields in the table being extracted. This specifies the number of partitions to use when writing the extracted data to S3. This can be useful for optimizing the performance of the extract process, as it allows the data to be distributed across multiple workers and written in parallel. It is generally recommended to set the number of partitions to a value that is large enough to fully utilize the available resources, but small enough to avoid overwhelming the S3 infrastructure.                                        |
 
-### Step-by-step guide for spinning up a Docker image with the above code and pipeline:
+## DynamoDb Extract Table
 
-An example of how this can be used in the docker image is as follows. You can run a pipeline locally:
+The DynamoDb table can be used to store the High Water Mark (HWM) and Low Water Mark (LWM) values for each extract table
+that is being processed. These values can be used to determine the range of rows to extract from the JDBC source, for
+example by using the `determine_extract_plan` method in the codebase.etl.extract module. The HWM and LWM values can also
+be used to check whether a previous extract job has been successful and whether a full or partial extract needs to be
+done. Additionally, the DynamoDb table can be used to store metadata about the extract job, such as the number of rows
+extracted and whether the extract was successful, and can be used to update the status of the extract job using the
+`update_extract_tracking_table` method in the codebase.aws.ddb module.
 
-1. Build the base_pyspark Docker image using the command:
+## S3 Extract Destination
 
-```shell
-docker build -t base_pyspark -f scripts/docker/base_pyspark/Dockerfile .
-```
+The glue job writes data to S3 by using the `DataFrame.write` method with the `.parquet()` format.
 
-2. Build the etl_jdbc Docker image using the command:
-
-```shell
-docker build -t etl_jdbc -f scripts/docker/etl_jdbc/Dockerfile .
-```
-
-3. Run the etl_jdbc Docker image with the necessary environment variables set. More on this can be found below.
-
-#### The above solution in AWS Glue
-
-To use the above code in an AWS Glue job, you will need to specify the input arguments as Glue job parameters. You can
-do this by setting up a Glue job and specifying the parameters in the job's configuration.
-
-You can then access the input arguments in your PySpark script using the `getResolvedOptions` class. This class allows
-you
-to retrieve the job parameters as a dictionary.
-
-Here is an example of how you might retrieve the input arguments in your PySpark script:
-
-```python
-import sys
-from awsglue.utils import getResolvedOptions
-
-# Retrieve the job parameters as a dictionary
-args = getResolvedOptions(sys.argv,
-                          ['EDL_TYPE', 'DB_ENGINE', 'DB_SECRET', 'DB_PORT',
-                           'DB_NAME', 'PARTITION_COLUMN', 'LOWER_BOUND', 'UPPER_BOUND',
-                           'NUM_PARTITIONS', 'FETCHSIZE', 'EXTRACT_TABLE', 'EXTRACT_TYPE',
-                           'HWM_COL_NAME', 'HWM_COLUMN_TYPE', 'LWM_VALUE', 'HWM_VALUE',
-                           'REPARTITION_DATAFRAME', 'EXTRACT_S3_PARTITIONS', 'EXTRACT_S3_URI',
-                           'REINGEST', 'TRACKING_TABLE_NAME']
-                          )
-```
-
-This is already set up in the infrastructure layer. Once you have extracted the job parameters, you can use them in your
-PySpark script just like you would in any other Python script. You can then run your Glue job as usual, and the input
-arguments will be passed to the script as expected.
-
-## base_pyspark Docker Container
-
-The docker container is based on the Amazon Linux 2 image, which is a lightweight and secure Linux operating system used
-by AWS. It is intended to be used as a base image for creating PySpark applications.
-
-The container installs and configures Java, AWS CLI, and PySpark, and includes Hadoop and Spark configuration files. It
-also includes JDBC jar files, which are necessary for connecting to a JDBC data source from PySpark.
-
-To use this docker container, you will first need to build it using the docker build command:
-
-```shell
-docker build -t base_pyspark -f scripts/docker/base_pyspark/Dockerfile .
-```
-
-Once the container is built, you can run it using the docker run command, specifying any necessary environment variables
-and mounting any necessary volumes:
-
-```shell
-docker run \
-  -v ~/.aws:/root/.aws \
-  --rm=true \
-  -e ENV_VAR_1=value1 \
-  -e ENV_VAR_2=value2 \
-  base_pyspark
-```
-
-## etl_jdbc Docker Container (This is the one you use to run the Extract Spark Pipeline)
-
-To use the docker container for the code above, you will need to have Docker installed on your local machine. Once you
-have Docker installed, follow the steps below:
-
-1. Build the base_pyspark image by running the command: docker build -t base_pyspark -f
-   scripts/docker/base_pyspark/Dockerfile .
-2. Build the etl_jdbc image by running the command: docker build -t etl_jdbc -f scripts/docker/etl_jdbc/Dockerfile .
-3. Run the etl_jdbc image with the required input arguments by using the command:
-
-```shell
-docker run \
-  -v ~/.aws:/root/.aws \
-  --rm=true \
-  -e SCRIPT_NAME=jdbc_dev_extract_job.py \
-  -e EDL_TYPE=extract \
-  -e DB_ENGINE=postgres \
-  -e DB_SECRET=business/accounts\
-  -e DB_PORT=5432 \
-  -e DB_NAME=fzmjfsta \
-  -e PARTITION_COLUMN=AccountID \
-  -e LOWER_BOUND=1 \
-  -e UPPER_BOUND=1000 \
-  -e NUM_PARTITIONS=4 \
-  -e FETCHSIZE=1000 \
-  -e EXTRACT_TABLE=public.accounts \
-  -e EXTRACT_TYPE=PE \
-  -e HWM_COL_NAME=AccountID \
-  -e HWM_COLUMN_TYPE=IntegerType \
-  -e LWM_VALUE=1 \
-  -e HWM_VALUE=1000 \
-  -e REPARTITION_DATAFRAME=True \
-  -e EXTRACT_S3_PARTITIONS=AccountType \
-  -e EXTRACT_S3_URI=s3://my-bucket/extract/accounts \
-  -e REINGEST=True \
-  -e TRACKING_TABLE_NAME=schema.table \
-  etl_jdbc
-```
-
-The docker container will run the PySpark job specified in the `SCRIPT_NAME`, so essentially any spark script can be run
-with their respective input arguments.
-
-## Conclusion
-
-In conclusion, the above code represents a Spark JDBC extract pipeline that can be used to extract data from a JDBC
-source and save it to a DynamoDB table in a cloud environment. The pipeline is designed to follow the DRY principle and
-adhere to best practices for unit testing and integration testing. The codebase module is available in AWS S3 as a .whl
-file, .zip file, and a lambda layer .zip file. The pipeline can be run using the docker run command, or in AWS Glue
-using the Glue GetResolvedOptions class. It is important to note that the solution only supports MySQL and Postgres, and
-that the developers are working to improve the current solution before taking on other database engines.
-
+In this example, the extracted_dataframe is created from the jdbc source, converted to a DataFrame, and then written to
+a specific location in S3 in parquet format. The mode is set to overwrite which means that if the files are already
+present, they will be overwritten with the new files. The _extract_s3_uri is the destination S3 bucket and the
+`add_url_safe_current_time()` function is used to append a timestamp to the filename to make it unique.
 
 ---
 <small> 

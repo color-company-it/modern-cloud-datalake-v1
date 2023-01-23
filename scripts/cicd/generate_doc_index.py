@@ -59,7 +59,7 @@ def generate_index(directory: str) -> None:
         indexed_files[folder].append(file_parts[-1])
 
     # Open the index file for writing
-    with open("../../docs/index.md", "w") as index_file:
+    with open("./documentation/index.md", "w") as index_file:
         # Write the index title
         index_file.write(HEADER)
         index_file.write("# Index\n\n")
@@ -77,4 +77,4 @@ def generate_index(directory: str) -> None:
 
 
 if __name__ == "__main__":
-    generate_index("../../docs/**/*")
+    generate_index("./documentation/**/*")

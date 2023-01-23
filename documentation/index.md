@@ -18,6 +18,9 @@ from their data and drive business growth.
 
 # Index
 
-1. 1_UserDocumentation
-	- [1_CodebaseModule](1_UserDocumentation/1_CodebaseModule.md)
-	- [2_JDBCExtractPipeline](1_UserDocumentation/2_JDBCExtractPipeline.md)
+1. .
+	- [1_configuration](./1_configuration.md)
+	- [2_codebase](./2_codebase.md)
+	- [3_jdbc_etl_job](./3_jdbc_etl_job.md)
+	- [4_orchestration](./4_orchestration.md)
+	- [FAQs](./FAQs.md)

@@ -36,8 +36,9 @@ resource "aws_glue_job" "extract_job" {
   }
 
   default_arguments = merge({
-    "--job_language" = "python"
-    #    "--extra-py-files" = var.extra_py_files
+    "--job_language"   = "python"
+    "--extra-py-files" = var.extra_py_files
+    "--additional-python-modules" : var.additional_python_modules
     },
     local.configuration.extract.arguments
   )
@@ -85,8 +86,9 @@ resource "aws_glue_job" "transform_job" {
   }
 
   default_arguments = merge({
-    "--job_language" = "python"
-    #    "--extra-py-files" = var.extra_py_files
+    "--job_language"   = "python"
+    "--extra-py-files" = var.extra_py_files
+    "--additional-python-modules" : var.additional_python_modules
     },
     local.configuration.transform.arguments
   )
@@ -134,8 +136,9 @@ resource "aws_glue_job" "load_job" {
   }
 
   default_arguments = merge({
-    "--job_language" = "python"
-    #    "--extra-py-files" = var.extra_py_files
+    "--job_language"   = "python"
+    "--extra-py-files" = var.extra_py_files
+    "--additional-python-modules" : var.additional_python_modules
     },
     local.configuration.load.arguments
   )

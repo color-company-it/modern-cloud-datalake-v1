@@ -100,7 +100,8 @@ data "aws_iam_policy_document" "default_policy" {
     actions = [
       "kms:Encrypt",
       "kms:DecryptKey",
-      "kms:Decrypt"
+      "kms:Decrypt",
+      "kms:GenerateDataKey"
     ]
     resources = var.kms_arns
   }

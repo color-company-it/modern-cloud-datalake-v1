@@ -213,7 +213,7 @@ if __name__ == "__main__":
         type=str,
         help="Comma separated strings to partition by",
     )
-    parser.add_argument("--reingest", type=str, default=False, help="Reingest flag")
+    parser.add_argument("--reingest", type=str, default="false", help="Reingest flag")
     parser.add_argument(
         "--tracking_table_name", type=str, help="The DynamoDB tracking table name"
     )

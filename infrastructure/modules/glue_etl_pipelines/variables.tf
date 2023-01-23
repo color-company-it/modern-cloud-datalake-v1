@@ -31,10 +31,7 @@ variable "script_dir" {
 }
 
 variable "extra_py_files" {
-  # setting the --extra-py-files value as an empty string if there are no extra py files for the job,
-  # will break the job when invoked set to null value instead of an empty string
   description = "Additional Python files to include in the Glue job execution."
-  default     = "null"
 }
 
 variable "transform_job_timeout" {
@@ -59,4 +56,8 @@ variable "transform_bucket_name" {
 
 variable "load_bucket_name" {
   description = "S3 bucket where the load data is stored"
+}
+
+variable "additional_python_modules" {
+  description = "Pip dependencies for the glue job to use"
 }

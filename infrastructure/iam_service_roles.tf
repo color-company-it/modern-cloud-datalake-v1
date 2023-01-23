@@ -1,3 +1,6 @@
+/*
+Lambda Service Role
+*/
 module "lambda_service_role" {
   source            = "./modules/iam_service_role"
   name              = var.project_name
@@ -18,6 +21,9 @@ resource "aws_iam_role_policy_attachment" "custom_lambda_policy" {
   policy_arn = aws_iam_policy.custom_lambda_policy.arn
 }
 
+/*
+Glue Service Role
+*/
 module "glue_service_role" {
   source            = "./modules/iam_service_role"
   name              = var.project_name
@@ -38,6 +44,9 @@ resource "aws_iam_role_policy_attachment" "custom_glue_policy" {
   policy_arn = aws_iam_policy.custom_glue_policy.arn
 }
 
+/*
+State Machine Service Role
+*/
 module "state_machine_service_role" {
   source            = "./modules/iam_service_role"
   name              = var.project_name

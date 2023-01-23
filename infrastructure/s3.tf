@@ -37,3 +37,11 @@ module "scripts_bucket" {
   sdlc_stage = var.sdlc_stage
   use_case   = "scripts"
 }
+
+/* Archiving the codebase wheel for glue use */
+resource "aws_s3_bucket_object" "codebase" {
+  bucket      = module.scripts_bucket.bucket
+  key         = "codebase-0.1-py3-none-any.whl"
+  source      = "${path.module}/../dist/codebase-0.1-py3-none-any.whl"
+  source_hash = filemd5("${path.module}/../dist/codebase-0.1-py3-none-any.whl")
+}

@@ -1,6 +1,11 @@
 repos:
   - repo: local
     hooks:
+      - id: generate codebase whl
+        name: generate-codebase-whl
+        entry: python setup.py bdist_wheel
+        language: system
+        pass_filenames: false
       - id: package-codebase-lambda-layer
         name: package-codebase-lambda-layer
         entry: python scripts/cicd/lambda_layer.py -i codebase/ -o infrastructure/lambda_layers/codebase/ -n codebase

@@ -80,7 +80,8 @@ data "aws_iam_policy_document" "custom_step_function_policy" {
       "glue:StartJobRun",
       "glue:GetJobRun",
       "glue:GetJob",
-      "glue:BatchStopJobRun"
+      "glue:BatchStopJobRun",
+      "glue:StartCrawler"
     ]
     resources = [
       "*"

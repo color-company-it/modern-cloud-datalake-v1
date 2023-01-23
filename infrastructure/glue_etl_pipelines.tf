@@ -20,4 +20,7 @@ module "glue_etl_pipelines" {
   extract_bucket_name   = module.etl_buckets["extract"].bucket
   load_bucket_name      = module.etl_buckets["transform"].bucket
   transform_bucket_name = module.etl_buckets["load"].bucket
+
+  extra_py_files            = "s3://${aws_s3_bucket_object.codebase.bucket}/${aws_s3_bucket_object.codebase.key}"
+  additional_python_modules = local.additional_python_modules
 }

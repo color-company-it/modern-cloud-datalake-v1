@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "assume_role_policy" {
 }
 
 resource "aws_iam_role" "role" {
-  name               = "${var.name}-${var.sdlc_stage}-${var.aws_resource_name}-role"
+  name               = "${var.name}_${var.sdlc_stage}_${var.aws_resource_name}_role"
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
 }
 
@@ -100,7 +100,8 @@ data "aws_iam_policy_document" "default_policy" {
     actions = [
       "kms:Encrypt",
       "kms:DecryptKey",
-      "kms:Decrypt"
+      "kms:Decrypt",
+      "kms:GenerateDataKey"
     ]
     resources = var.kms_arns
   }
@@ -119,7 +120,7 @@ data "aws_iam_policy_document" "default_policy" {
 }
 
 resource "aws_iam_policy" "default_policy" {
-  name        = "${var.name}-${var.sdlc_stage}-${var.aws_resource_name}-policy"
+  name        = "${var.name}_${var.sdlc_stage}_${var.aws_resource_name}_policy"
   description = "Policy for ${var.sdlc_stage} ${var.aws_resource_name}"
   policy      = data.aws_iam_policy_document.default_policy.json
 }

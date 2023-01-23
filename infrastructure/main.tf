@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket = "terraflow-tf-states"
-    key    = "modern_cloud_datalake/state.tfstate"
+    key    = "modern_cloud_datalake_v1/state.tfstate"
     region = "eu-west-1"
   }
 }

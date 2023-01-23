@@ -70,6 +70,17 @@ data "aws_iam_policy_document" "custom_glue_policy" {
       aws_dynamodb_table.tracking_table[local.etl_stages[2]].arn,
     ]
   }
+
+  statement {
+    sid    = "AllowSNSPublish"
+    effect = "Allow"
+    actions = [
+      "sns:Publish",
+    ]
+    resources = [
+      "*"
+    ]
+  }
 }
 
 data "aws_iam_policy_document" "custom_step_function_policy" {

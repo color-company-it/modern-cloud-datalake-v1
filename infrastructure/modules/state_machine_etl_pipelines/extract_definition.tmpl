@@ -117,16 +117,7 @@
         }
       },
       "InputPath": "$",
-      "Next": "Update Extract Tables"
-    },
-    "Update Extract Tables": {
-      "Type": "Task",
-      "Next": "Publish to Source Owner Topic",
-      "Parameters": {
-        "Name": "${glue_crawler_name}"
-      },
-      "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
-      "Comment": "Update Extract Tables"
+      "Next": "Publish to Source Owner Topic"
     },
     "Publish to Source Owner Topic": {
       "Type": "Task",

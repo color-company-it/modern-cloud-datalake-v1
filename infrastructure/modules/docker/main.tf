@@ -18,6 +18,12 @@ resource "aws_ecr_repository" "ecr_repo" {
   image_scanning_configuration {
     scan_on_push = true
   }
+
+  tags = {
+    source            = var.name
+    sdlc_stage        = var.sdlc_stage
+    docker_image_name = "${local.docker_image_name}_extract"
+  }
 }
 
 resource "aws_ecr_repository_policy" "ecr_repo_policy" {

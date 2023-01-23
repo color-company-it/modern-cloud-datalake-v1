@@ -3,11 +3,15 @@ variable "region_name" {
 }
 
 variable "project_name" {
-  default = "dirk-test"
+  default = "dirk_test"
 }
 
 variable "sdlc_stage" {
   default = "dev"
+}
+
+variable "python_version" {
+  default = "python3.9"
 }
 
 data "aws_caller_identity" "current" {}

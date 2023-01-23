@@ -33,7 +33,7 @@ def get_config_from_s3(bucket_name: str, file_name: str) -> dict:
         except ClientError as error:
             if error.response["Error"]["Code"] in RETRY_CODES:
                 logging.warning(
-                    f"Encountered a retryable error '{error}', retrying in {retry_delay} seconds"
+                    f"Encountered a retryable error '{error}', retrying in {RETRY_DELAY} seconds"
                 )
                 time.sleep(RETRY_DELAY)
             else:

@@ -1,4 +1,4 @@
-def generate_extract_config(config) -> dict:
+def generate_extract_config(config) -> list:
     """
     Take the config file and set it up into a flat structure
     for the event payload for the extract pipelines.
@@ -24,7 +24,7 @@ def generate_extract_config(config) -> dict:
             "source_type": extract["source_type"],
             "db_engine": extract["db_engine"],
             "db_secret": extract["db_secret"],
-            "db_port": extract["db_port"],
+            "db_port": f'{extract["db_port"]}',
             "db_name": extract["db_name"],
             # opt for default arguments
             "partition_column": default("partition_column"),
@@ -39,6 +39,8 @@ def generate_extract_config(config) -> dict:
             "extract_s3_partitions": default("extract_s3_partitions"),
             "num_partitions": default("num_partitions"),
             "fetchsize": default("fetchsize"),
+            "worker_no": int(default("worker_no")),  # needs to be int for sf payload
+            "worker_type": default("worker_type"),
         }
         event_arguments.append(config)
 

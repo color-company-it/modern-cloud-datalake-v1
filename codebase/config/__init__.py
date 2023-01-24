@@ -70,13 +70,13 @@ def generate_transform_config(config) -> list:
             "source_name": source_name,
             "transform_table": table_name,
             "job_type": transform["job_type"],
-            "source_type": transform["source_type"],
             "worker_no": int(default("worker_no")),  # needs to be int for sf payload
             "partition_key": default(
                 "partition_key"
             ),  # this can be a list to create a combined partition key
             "schema": transform.get("schema", {}),  # this is optional
             "worker_type": default("worker_type"),
+            "delta": default("delta"),
         }
         event_arguments.append(config)
 

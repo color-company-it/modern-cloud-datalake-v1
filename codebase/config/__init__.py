@@ -21,7 +21,6 @@ def generate_extract_config(config) -> list:
             "source_name": source_name,
             "extract_table": table_name,
             "job_type": extract["job_type"],
-            "source_type": extract["source_type"],
             "db_engine": extract["db_engine"],
             "db_secret": extract["db_secret"],
             "db_port": f'{extract["db_port"]}',
@@ -70,6 +69,7 @@ def generate_transform_config(config) -> list:
             "source_name": source_name,
             "transform_table": table_name,
             "job_type": transform["job_type"],
+            "db_name": transform["db_name"],
             "worker_no": int(default("worker_no")),  # needs to be int for sf payload
             "partition_key": default(
                 "partition_key"

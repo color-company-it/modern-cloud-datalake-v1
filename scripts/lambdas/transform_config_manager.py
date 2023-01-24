@@ -75,3 +75,14 @@ def lambda_handler(event, context):
     _return = {"status_code": 200, "tables_to_transform": _tables_to_transform}
     LOGGER.info(f"Return: {_return}")
     return _return
+
+
+resp = lambda_handler(
+    event={
+        "source_name": "business_bank_config_jdbc_extract",
+        "transform_tables": "public.accounts",
+    },
+    context=None,
+)
+
+print(resp)

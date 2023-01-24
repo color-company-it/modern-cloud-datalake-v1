@@ -3,7 +3,6 @@ source_owners:
   - dirkscgm@gmail.com
 extract:
   job_type: glue # emr, ecs
-  source_type: jdbc # api, file
   script_name: jdbc_extract_job.py
   arguments:
     --test: 1

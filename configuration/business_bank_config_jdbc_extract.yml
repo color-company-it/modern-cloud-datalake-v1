@@ -57,6 +57,7 @@ transform:
     --test: 1
   default_arguments:
     delta: true
+    date_range: * # a date range of data to transform from the extract source, * is all
     worker_no: "2"
     worker_type: "Standard"
   tables:

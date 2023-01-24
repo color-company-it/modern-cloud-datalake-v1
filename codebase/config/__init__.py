@@ -76,6 +76,9 @@ def generate_transform_config(config) -> list:
             ),  # this can be a list to create a combined partition key
             "schema": transform.get("schema", {}),  # this is optional
             "worker_type": default("worker_type"),
+            "date_range": default(
+                "date_range"
+            ),  # a date range of data to transform from the extract source, * is all
             "delta": default("delta"),
         }
         event_arguments.append(config)

@@ -49,11 +49,23 @@ extract:
       # fetchsize: Set as default above
       # reingest: Defined by the Step Function
       # tracking_table_name: Defined in the infrastructure
-#transform:
-#  job_type: glue # emr, ecs
-#  script_name: jdbc_transform_job.py
-#  arguments:
-#    --test: 1
+transform:
+  job_type: glue # emr, ecs
+  script_name: jdbc_transform_job.py
+  db_name: "fzmjfsta"
+  arguments:
+    --test: 1
+  default_arguments:
+    delta: true
+    worker_no: "2"
+    worker_type: "Standard"
+  tables:
+    public.accounts:
+      partition_key: # can be a list ot create a combined partition key
+        - AccountID
+      schema: # this is optional
+        column: { from_type: to_type }
+
 #load:
 #  job_type: glue # emr, ecs
 #  script_name: jdbc_load_job.py

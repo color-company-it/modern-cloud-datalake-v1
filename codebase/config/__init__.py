@@ -45,3 +45,39 @@ def generate_extract_config(config) -> list:
         event_arguments.append(config)
 
     return event_arguments
+
+
+def generate_transform_config(config) -> list:
+    """
+    Take the config file and set it up into a flat structure
+    for the event payload for the extract pipelines.
+    """
+    transform = config["transform"]
+    defaults = transform["default_arguments"]
+    source_name = config["source_name"]
+    event_arguments = []
+
+    def default(item):
+        """
+        The tracking_table_config will always overwrite the default argument.
+        """
+        if table_config.get(item, False):
+            return table_config[item]
+        return defaults[item]
+
+    for table_name, table_config in transform["tables"].items():
+        config = {
+            "source_name": source_name,
+            "transform_table": table_name,
+            "job_type": transform["job_type"],
+            "source_type": transform["source_type"],
+            "worker_no": int(default("worker_no")),  # needs to be int for sf payload
+            "partition_key": default(
+                "partition_key"
+            ),  # this can be a list to create a combined partition key
+            "schema": transform.get("schema", {}),  # this is optional
+            "worker_type": default("worker_type"),
+        }
+        event_arguments.append(config)
+
+    return event_arguments

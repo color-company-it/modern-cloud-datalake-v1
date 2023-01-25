@@ -10,6 +10,7 @@ extract on the next run, or reingest or rerun based on the success of the pipeli
 The job supports the following JDBC engines: postgres and mysql.
 """
 import argparse
+import datetime
 
 from awsglue.context import GlueContext
 from awsglue.transforms import *
@@ -34,6 +35,8 @@ from codebase.etl.extract import (
     get_pushdown_query,
     create_db_table_schema,
 )
+
+NOW = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
 
 def main():

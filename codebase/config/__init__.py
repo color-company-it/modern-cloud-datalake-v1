@@ -21,6 +21,7 @@ def generate_extract_config(config) -> list:
             "source_name": source_name,
             "extract_table": table_name,
             "job_type": extract["job_type"],
+            "source_type": extract["source_type"],
             "db_engine": extract["db_engine"],
             "db_secret": extract["db_secret"],
             "db_port": f'{extract["db_port"]}',

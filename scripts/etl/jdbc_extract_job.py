@@ -26,6 +26,7 @@ from codebase.etl import (
     add_url_safe_current_time,
     get_spark_logger,
     MIN_VALUES,
+    add_hash_column,
 )
 from codebase.etl.extract import (
     determine_extract_plan,
@@ -127,7 +128,11 @@ def main():
             LOGGER.info(f"Repartitioning DataFrame with {num_partitions} partitions")
             data_frame = data_frame.repartition(num_partitions)
 
+        # adding all relevant metadata
         data_frame = add_url_safe_current_time(data_frame=data_frame)
+        data_frame = add_hash_column(
+            data_frame=data_frame, columns_to_hash=data_frame.columns
+        )
 
         LOGGER.info("Printing Schema:")
         data_frame.printSchema()

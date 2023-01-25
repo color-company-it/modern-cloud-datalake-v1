@@ -115,3 +115,50 @@ description and use case for each key in the configuration file:
     - `tables`: This key is used to specify the details of the tables that will be extracted from the data source. Each
       table is specified as a key-value pair, with the key being the name of the table and the value being a dictionary
       of parameters that are passed to the extract job when it runs.
+        - `partition_column`: This key specifies the column name that the data should be partitioned on when loading it
+          into S3. The data will be divided into multiple partitions based on the values in this column. This is used to
+          improve query performance and reduce the amount of data scanned during query execution.
+        - `lower_bound`: This key specifies the lower bound value for the partition column when using incremental
+          extract. When the extract type is set to "PE", the extract will only extract data where the partition column
+          value is greater than or equal to this lower bound value.
+        - `upper_bound`: This key specifies the upper bound value for the partition column when using incremental
+          extract. When the extract type is set to "PE", the extract will only extract data where the partition column
+          value is less than or equal to this upper bound value.
+        - `extract_type`: This key specifies the type of extract that should be performed. The supported values are "
+          FE" (Full Extract) and "PE" (Partial Extract). When set to "PE", the extract will only extract data where the
+          partition column value is between the lower_bound and upper_bound values.
+        - `hwm_col_name`: This key specifies the column name used to track the highest watermark (HWM) value for
+          incremental extract. The extract pipeline will use this column to determine the range of data to extract.
+        - `hwm_column_type`: This key specifies the data type of the column specified in the hwm_col_name key. This is
+          used to ensure that the extract pipeline generates the correct SQL query for extracting the data.
+        - `lwm_value`: This key specifies the value of the lowest watermark (LWM) for the hwm_col_name column. This is
+          used to determine the range of data to extract in incremental extract.
+        - `hwm_value`: This key specifies the value of the highest watermark (HWM) for the hwm_col_name column. This is
+          used to determine the range of data to extract in incremental extract.
+        - `repartition_dataframe`: This key specifies whether or not to repartition the dataframe after extract. When
+          set to "true", the dataframe will be repartitioned based on the value specified in the extract_s3_partitions
+          key. This improves the performance of the load step.
+        - `extract_s3_partitions`: This key specifies the column name to partition the data on when it is loaded into
+          S3. This improves the performance of the load step.
+        - `num_partitions`: This key specifies the number of partitions to use when loading the data into S3. This
+          improves the performance of the load step.
+        - `fetchsize`: This key specifies the number of rows to fetch from the JDBC data source at a time. This can be
+          used to improve the performance of the extract process.
+
+The extract step function expects a payload in JSON format with the following keys and values:
+
+- `extract_tables`: This key is a string value that specifies the table or tables to be extracted. The value should be
+  in the format of <schema_name>.<table_name> (e.g. "public.accounts").
+- `source_name`: This key is a string value that represents the name of the data source. It is used to identify the data
+  source and the corresponding configuration.
+- `reingest`: This key is a string value that specifies whether to reingest data that has already been extracted. The
+  value should be either "true" or "false", where "false" means to only extract new data, and "true" means to re-extract
+  all data.
+
+```json
+{
+  "extract_tables": "public.accounts,public.transactions",
+  "source_name": "business_bank_config_jdbc_extract",
+  "reingest": "false"
+}
+```

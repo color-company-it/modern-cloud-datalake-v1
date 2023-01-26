@@ -1,5 +1,5 @@
 {
-  "Comment": "Extract Pipeline for ${name}",
+  "Comment": "Extract Pipeline for dirk_test_dev_business_bank_config_jdbc_extract_extract",
   "StartAt": "Extract Config Manager",
   "States": {
     "Extract Config Manager": {
@@ -44,6 +44,7 @@
                 "Comment": "Run Glue Extract Job"
               }
             ],
+            "Default": "Handle Extract Job Run Status in Map",
             "Comment": "Choice for Glue, EMR, and ECS"
           },
           "Glue Start Extract Job Run": {
@@ -78,23 +79,38 @@
               }
             },
             "End": true,
-            "Comment": "Run extract for the provided table.",
-            "Catch": [
+            "Comment": "Run extract for the provided table."
+          },
+          "Handle Extract Job Run Status in Map": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "OutputPath": "$",
+            "Parameters": {
+              "Payload.$": "$",
+              "FunctionName": "${lambda_handle_step_function_status_arn}",
+            },
+            "Retry": [
               {
                 "ErrorEquals": [
-                  "Glue.AWSGlueException"
+                  "Lambda.ServiceException",
+                  "Lambda.AWSLambdaException",
+                  "Lambda.SdkClientException",
+                  "Lambda.TooManyRequestsException"
                 ],
-                "Comment": "Catch Glue Errors",
-                "End": true
+                "IntervalSeconds": 2,
+                "MaxAttempts": 6,
+                "BackoffRate": 2
               }
-            ]
+            ],
+            "Comment": "Handles all Statuses of the Step Function",
+            "End": true
           }
         }
       },
       "InputPath": "$",
-      "Next": "Handle Extract Job Run Status"
+      "Next": "Handle Extract Job Run Status after Map"
     },
-    "Handle Extract Job Run Status": {
+    "Handle Extract Job Run Status after Map": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke",
       "OutputPath": "$",

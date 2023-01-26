@@ -6,7 +6,6 @@ module "state_machine_etl_pipelines" {
   sdlc_stage  = var.sdlc_stage
   config_file = "${path.root}/../configuration/${each.value}"
 
-
   glue_crawler_name                      = module.glue_etl_pipelines[each.value].extract_glue_crawler_name[0]
   glue_job_name                          = module.glue_etl_pipelines[each.value].extract_glue_job_name[0]
   glue_role_arn                          = module.glue_service_role.role_arn

@@ -89,6 +89,8 @@ resource "aws_glue_job" "transform_job" {
     "--job_language"   = "python"
     "--extra-py-files" = var.extra_py_files
     "--additional-python-modules" : var.additional_python_modules
+    # enabling hudi
+    "--datalake-formats" : "hudi"
     },
     local.configuration.transform.arguments
   )

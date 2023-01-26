@@ -65,7 +65,7 @@ transform:
       partition_key: # can be a list ot create a combined partition key
         - AccountID
       schema: # this is optional
-        column: { from_type: to_type }
+        column: new_type
 
 #load:
 #  job_type: glue # emr, ecs

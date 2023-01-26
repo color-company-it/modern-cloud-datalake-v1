@@ -157,16 +157,19 @@ def get_num_partitions(data_frame: DataFrame, rows_per_partition: int = 1000) ->
     return num_partitions
 
 
-def add_url_safe_current_time(data_frame: DataFrame) -> DataFrame:
+def add_url_safe_current_time(
+    data_frame: DataFrame, source_type: str = "jdbc", etl_stage: str = "extract"
+) -> [DataFrame, str]:
     """
     Adds a column to the given data frame with the current timestamp in a format safe for use in URIs.
     """
-    data_frame = data_frame.withColumn("jdbc_extract_time", current_timestamp())
+    column_name = f"{source_type}_{etl_stage}_time"
+    data_frame = data_frame.withColumn(column_name, current_timestamp())
     data_frame = data_frame.withColumn(
-        "jdbc_extract_time",
-        date_format(col("jdbc_extract_time"), "yyyy-MM-dd_hh-mm-ss"),
+        column_name,
+        date_format(col(column_name), "yyyy-MM-dd_hh-mm-ss"),
     )
-    return data_frame
+    return data_frame, column_name
 
 
 def add_hash_column(data_frame: DataFrame, columns_to_hash: List[str]) -> DataFrame:

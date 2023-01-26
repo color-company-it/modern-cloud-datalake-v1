@@ -11,11 +11,14 @@ The job supports the following JDBC engines: postgres and mysql.
 """
 import argparse
 import datetime
+import sys
 
-from awsglue.context import GlueContext
-from awsglue.transforms import *
+if "glue" in sys.modules:
+    from awsglue.context import GlueContext
+    from awsglue.transforms import *
+
 from pyspark.context import SparkContext
-from pyspark.sql import DataFrame
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col, max
 
 from codebase.aws.ddb import get_tracking_table_item, update_extract_tracking_table
@@ -129,7 +132,9 @@ def main():
             data_frame = data_frame.repartition(num_partitions)
 
         # adding all relevant metadata
-        data_frame = add_url_safe_current_time(data_frame=data_frame)
+        data_frame, _ = add_url_safe_current_time(
+            data_frame=data_frame, etl_stage="extract"
+        )
         data_frame = add_hash_column(
             data_frame=data_frame, columns_to_hash=data_frame.columns
         )
@@ -260,8 +265,12 @@ if __name__ == "__main__":
     _reingest = bool(_reingest.lower() in ["true", "y", "1"])
 
     sc = SparkContext()
-    glueContext = GlueContext(sc)
-    SPARK = glueContext.spark_session
+    if "glue" in sys.modules:
+        glueContext = GlueContext(sc)
+        SPARK = glueContext.spark_session
+    else:
+        LOGGER.info("Glue libraries not found, continuing with the SparkContext")
+        SPARK = SparkSession.builder.getOrCreate()
 
     # make sure _hwm_column_type is supported
     if _hwm_column_type not in MIN_VALUES:

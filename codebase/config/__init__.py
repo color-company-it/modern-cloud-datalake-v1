@@ -52,6 +52,7 @@ def generate_transform_config(config) -> list:
     Take the config file and set it up into a flat structure
     for the event payload for the extract pipelines.
     """
+    extract = config["extract"]
     transform = config["transform"]
     defaults = transform["default_arguments"]
     source_name = config["source_name"]
@@ -70,7 +71,9 @@ def generate_transform_config(config) -> list:
             "source_name": source_name,
             "transform_table": table_name,
             "job_type": transform["job_type"],
-            "db_name": transform["db_name"],
+            "source_type": extract["source_type"],
+            "run_crawler": transform["run_crawler"],
+            "db_name": extract["db_name"],
             "worker_no": int(default("worker_no")),  # needs to be int for sf payload
             "partition_key": default(
                 "partition_key"

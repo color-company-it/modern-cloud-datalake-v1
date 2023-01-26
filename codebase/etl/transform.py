@@ -22,14 +22,16 @@ def generate_schema(schema_dict: dict, db_engine: str) -> StructType:
     return StructType(struct_list)
 
 
-def create_partition_key(data_frame: DataFrame, columns: List[str]) -> DataFrame:
+def create_partition_key(
+    data_frame: DataFrame, columns: List[str], key_name: str = "partition_key"
+) -> [DataFrame, str]:
     """
     This function creates a combined partition key by concatenating the values of specified columns of a DataFrame.
     :param data_frame: DataFrame on which the partition key is to be created
     :param columns: list of column names to be used for creating the partition key
     :return: DataFrame with new column 'partition_key'
     """
-    logging.info("Creating the partition key")
+    logging.info(f"Creating the partition key: {key_name}")
     partition_key = concat_ws("_", *[col(column) for column in columns])
-    logging.info("Adding the partition key to the DataFrame")
-    return data_frame.withColumn("partition_key", partition_key)
+    logging.info(f"Adding the partition key: {key_name} to the DataFrame")
+    return data_frame.withColumn(key_name, partition_key), key_name

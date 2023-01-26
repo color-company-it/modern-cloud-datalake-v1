@@ -52,7 +52,7 @@ extract:
 transform:
   job_type: glue # emr, ecs
   script_name: jdbc_transform_job.py
-  db_name: "fzmjfsta"
+  run_crawler: "true"
   arguments:
     --test: 1
   default_arguments:

@@ -32,13 +32,6 @@ NOW = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
 
 def main():
-    hudi_options = get_hudi_options(
-        table_name=_hudi_table,
-        record_key=_record_key,
-        partition_path="jdbc_extract_time",
-        precombine_filed="partition_key",
-    )
-
     # if schema object is provided, apply it, else do nothing
     if _schema:
         table_schema = generate_schema(schema_dict=_schema, db_engine=_db_engine)
@@ -46,11 +39,20 @@ def main():
     else:
         data_frame = SPARK.read.parquet(_extract_s3_uri)
 
-    data_frame = create_partition_key(data_frame=data_frame, columns=data_frame.columns)
+    data_frame, partition_key_name = create_partition_key(
+        data_frame=data_frame, columns=data_frame.columns
+    )
 
     # Add transform date
     data_frame, job_partition_key = add_url_safe_current_time(
-        data_frame=data_frame, etl_stage="transform"
+        data_frame=data_frame, etl_stage="transform", source_type=_source_type
+    )
+
+    hudi_options = get_hudi_options(
+        table_name=_hudi_table,
+        record_key=_record_key,
+        partition_path=job_partition_key,
+        precombine_filed=partition_key_name,
     )
 
     # clean up all column names
@@ -75,6 +77,9 @@ if __name__ == "__main__":
     LOGGER = get_spark_logger()
     parser = argparse.ArgumentParser()
     parser.add_argument("--job_name", type=str, help="Glue Job Name")
+    parser.add_argument(
+        "--source_type", type=str, help="Data Source Type like JDBC or API"
+    )
     parser.add_argument("--db_name", type=str, help="Database name")
     parser.add_argument("--db_table", type=str, help="DB table")
     parser.add_argument("--db_engine", type=str, help="Database engine")
@@ -90,6 +95,7 @@ if __name__ == "__main__":
 
     args, _ = parser.parse_known_args()
     _job_name = args.job_name
+    _source_type = args.source_type
     _db_name = args.db_name
     _db_table = args.extract_table
     _db_engine = args.db_engine

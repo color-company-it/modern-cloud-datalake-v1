@@ -133,7 +133,7 @@ def main():
 
         # adding all relevant metadata
         data_frame, _ = add_url_safe_current_time(
-            data_frame=data_frame, etl_stage="extract"
+            data_frame=data_frame, etl_stage="extract", source_type=_source_type
         )
         data_frame = add_hash_column(
             data_frame=data_frame, columns_to_hash=data_frame.columns
@@ -201,6 +201,9 @@ if __name__ == "__main__":
     LOGGER = get_spark_logger()
     parser = argparse.ArgumentParser()
     parser.add_argument("--job_name", type=str, help="Glue Job Name")
+    parser.add_argument(
+        "--source_type", type=str, help="Data Source Type like JDBC or API"
+    )
     parser.add_argument("--db_engine", type=str, help="Database engine")
     parser.add_argument("--db_secret", type=str, help="AWS SecretsManager name")
     parser.add_argument("--db_host", type=str, help="Database host")
@@ -234,6 +237,7 @@ if __name__ == "__main__":
 
     args, _ = parser.parse_known_args()
     _job_name = args.job_name
+    _source_type = args.source_type
     _db_secret = get_db_secret(secret_name=args.db_secret)
     _db_engine = args.db_engine
     _db_user = _db_secret["db_user"]

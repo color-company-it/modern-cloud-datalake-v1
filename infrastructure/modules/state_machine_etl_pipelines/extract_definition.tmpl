@@ -44,7 +44,6 @@
                 "Comment": "Run Glue Extract Job"
               }
             ],
-            "Default": "Handle Extract Job Run Status",
             "Comment": "Choice for Glue, EMR, and ECS"
           },
           "Glue Start Extract Job Run": {
@@ -86,48 +85,38 @@
                   "Glue.AWSGlueException"
                 ],
                 "Comment": "Catch Glue Errors",
-                "Next": "Handle Extract Job Run Status"
+                "End": true
               }
             ]
-          },
-          "Handle Extract Job Run Status": {
-            "Type": "Task",
-            "Resource": "arn:aws:states:::lambda:invoke",
-            "OutputPath": "$",
-            "Parameters": {
-              "Payload.$": "$",
-              "FunctionName": "${lambda_handle_step_function_status_arn}"
-            },
-            "Retry": [
-              {
-                "ErrorEquals": [
-                  "Lambda.ServiceException",
-                  "Lambda.AWSLambdaException",
-                  "Lambda.SdkClientException",
-                  "Lambda.TooManyRequestsException"
-                ],
-                "IntervalSeconds": 2,
-                "MaxAttempts": 6,
-                "BackoffRate": 2
-              }
-            ],
-            "End": true,
-            "Comment": "Handles all Statuses of the Step Function"
           }
         }
       },
       "InputPath": "$",
-      "Next": "Publish to Source Owner Topic"
+      "Next": "Handle Extract Job Run Status"
     },
-    "Publish to Source Owner Topic": {
+    "Handle Extract Job Run Status": {
       "Type": "Task",
-      "Resource": "arn:aws:states:::sns:publish",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$",
       "Parameters": {
-        "TopicArn": "${source_topic_arn}",
-        "Message.$": "$"
+        "Payload.$": "$",
+        "FunctionName": "${lambda_handle_step_function_status_arn}"
       },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
       "End": true,
-      "Comment": "Publish Job Run Status to the Specific Onwers"
+      "Comment": "Handles all Statuses of the Step Function"
     }
   }
 }

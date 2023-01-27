@@ -54,7 +54,7 @@
               "NumberOfWorkers.$": "$.worker_no",
               "WorkerType.$": "$.worker_type",
               "Arguments": {
-                 "--source_name.$": "$.source_name",
+                "--source_name.$": "$.source_name",
                 "--transform_table.$": "$.transform_table",
                 "--job_type.$": "$.job_type",
                 "--source_type.$": "$.source_type",
@@ -66,7 +66,8 @@
                 "--schema.$": "$.schema",
                 "--extract_s3_uri.$": "$.extract_s3_uri",
                 "--transform_s3_uri.$": "$.transform_s3_uri",
-                "--source_topic_arn": "${source_topic_arn}"
+                "--source_topic_arn": "${source_topic_arn}",
+                "--etl_type": "transform"
               }
             },
             "End": true,

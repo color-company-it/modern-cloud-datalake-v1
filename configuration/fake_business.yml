@@ -1,10 +1,10 @@
 source_name: "fake_business"
+source_type: jdbc
 source_owners:
   - dirkscgm@gmail.com
 extract:
   job_type: glue # emr, ecs
   script_name: jdbc_extract_job.py
-  source_type: jdbc
   arguments:
     --test: 1
   default_arguments:

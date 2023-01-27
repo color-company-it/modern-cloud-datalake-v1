@@ -9,7 +9,7 @@ from codebase.config import generate_extract_config
 REGION_NAME = os.getenv("region_name")
 SDLC_STAGE = os.getenv("sdlc_stage")
 ACCOUNT_ID = os.getenv("account_id")
-CONFIG_S3_BUCKET = os.getenv("config_s3_bucket", "dirk-test-config-dev")
+CONFIG_S3_BUCKET = os.getenv("config_s3_bucket")
 EXTRACT_S3_BUCKET = os.getenv("extract_s3_bucket")
 EXTRACT_TRACKING_TABLE = os.getenv("extract_tracking_table")
 LOGGER = get_logger()
@@ -89,10 +89,3 @@ def lambda_handler(event, context):
     _return = {"status_code": 200, "tables_to_extract": _tables_to_extract}
     LOGGER.info(f"Return: {_return}")
     return _return
-
-
-result = lambda_handler(
-    event={"extract_tables": "*", "source_name": "fake_business"}, context=None
-)
-
-print(json.dumps(result, indent=4))

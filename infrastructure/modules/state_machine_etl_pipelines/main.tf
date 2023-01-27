@@ -37,6 +37,8 @@ resource "aws_sfn_state_machine" "extract" {
       glue_job_name                          = var.glue_job_name
       glue_role_arn                          = var.glue_role_arn
       states_role_arn                        = var.states_role_arn
+      source_topic_arn                       = aws_sns_topic.source_topic.arn
+      # this is passed in so SNS topics can be sent to source owners
     }
   )
   name     = "${local.job_name}_extract"
@@ -55,6 +57,8 @@ resource "aws_sfn_state_machine" "transform" {
       glue_crawler_name                      = var.glue_crawler_name
       glue_role_arn                          = var.glue_role_arn
       states_role_arn                        = var.states_role_arn
+      source_topic_arn                       = aws_sns_topic.source_topic.arn
+      # this is passed in so SNS topics can be sent to source owners
     }
   )
   name     = "${local.job_name}_transform"

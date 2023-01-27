@@ -84,7 +84,8 @@
                 "--num_partitions.$": "$.num_partitions",
                 "--fetchsize.$": "$.fetchsize",
                 "--extract_s3_uri.$": "$.extract_s3_uri",
-                "--tracking_table_name.$": "$.tracking_table_name"
+                "--tracking_table_name.$": "$.tracking_table_name",
+                "--source_topic_arn": "${source_topic_arn}"
               }
             },
             "End": true,
@@ -97,7 +98,8 @@
                 "Comment": "Catch All Glue Errors",
                 "Next": "Handle Extract Job Run Status in Map"
               }
-            ]
+            ],
+            "ResultPath": "$"
           },
           "Handle Extract Job Run Status in Map": {
             "Type": "Task",

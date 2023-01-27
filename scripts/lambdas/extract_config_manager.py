@@ -3,7 +3,7 @@ import os
 
 from codebase import get_logger
 from codebase.aws.s3 import get_config_from_s3
-from codebase.config import generate_extract_config
+from codebase.config.extract import generate_extract_config
 
 # items provided as lambda envs
 REGION_NAME = os.getenv("region_name")

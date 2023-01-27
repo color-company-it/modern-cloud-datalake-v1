@@ -132,7 +132,7 @@ def main():
             data_frame = data_frame.repartition(num_partitions)
 
         # adding all relevant metadata
-        data_frame, _ = add_url_safe_current_time(
+        data_frame, job_partition_key = add_url_safe_current_time(
             data_frame=data_frame, etl_stage="extract", source_type=_source_type
         )
         data_frame = add_hash_column(
@@ -147,13 +147,13 @@ def main():
                 f"Overwriting the directory before the extract write to: {_extract_s3_uri}"
             )
             data_frame.write.mode("overwrite").partitionBy(
-                _extract_s3_partitions
+                [job_partition_key] + _extract_s3_partitions
             ).parquet(_extract_s3_uri)
         else:
             LOGGER.info(f"Writing data to: {_extract_s3_uri}")
-            data_frame.write.mode("append").partitionBy(_extract_s3_partitions).parquet(
-                _extract_s3_uri
-            )
+            data_frame.write.mode("append").partitionBy(
+                [job_partition_key] + _extract_s3_partitions
+            ).parquet(_extract_s3_uri)
 
         # Update the hwm and lwm value for the next run, since we want to move to the next
         # hwm and lwm values, the hwm_value is turned off and lwm value is set to the max

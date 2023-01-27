@@ -1,0 +1,122 @@
+{
+  "Comment": "Transform Pipeline for ${name}",
+  "StartAt": "Transform Config Manager",
+  "States": {
+    "Transform Config Manager": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "${lambda_transform_config_manager_arn}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Comment": "Consume the event payload and construct the input argument for the TransformJobs",
+      "Next": "Iterate Through Transform Tables"
+    },
+    "Iterate Through Transform Tables": {
+      "Type": "Map",
+      "ItemProcessor": {
+        "ProcessorConfig": {
+          "Mode": "INLINE"
+        },
+        "StartAt": "Choose Job Type",
+        "States": {
+          "Choose Job Type": {
+            "Type": "Choice",
+            "Choices": [
+              {
+                "Variable": "$.job_type",
+                "StringEquals": "glue",
+                "Next": "Glue Start Transform Job Run",
+                "Comment": "Run Glue Transform Job"
+              }
+            ],
+            "Comment": "Choice for Glue, EMR, and ECS"
+          },
+          "Glue Start Transform Job Run": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::glue:startJobRun",
+            "Parameters": {
+              "JobName": "${glue_job_name}",
+              "NumberOfWorkers.$": "$.worker_no",
+              "WorkerType.$": "$.worker_type",
+              "Arguments": {
+                "--transform_table.$": "$.transform_table",
+                "--job_type.$": "$.job_type",
+                "--source_type.$": "$.source_type",
+                "--db_name.$": "$.db_name",
+                "--db_table.$": "$.db_table",
+                "--db_engine.$": "$.db_engine",
+                "--record_key.$": "$.record_key",
+                "--partition_key.$": "$.partition_key",
+                "--schema.$": "$.schema",
+                "--extract_s3_uri.$": "$.extract_s3_uri",
+                "--transform_s3_uri.$": "$.transform_s3_uri"
+              }
+            },
+            "End": true,
+            "Comment": "Run extract for the provided table."
+          }
+        }
+      },
+      "Next": "Run Glue Crawler?"
+    },
+    "Run Glue Crawler?": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.run_crawler",
+          "StringEquals": "true",
+          "Next": "Update Transform Tables"
+        }
+      ],
+      "Default": "Handle Transform Job Run Status",
+      "Comment": "Run Crawler if needed, otherwise crawler will run in Load "
+    },
+    "Update Transform Tables": {
+      "Type": "Task",
+      "Parameters": {
+        "Name": "${glue_crawler_name}"
+      },
+      "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+      "Comment": "Update the Catalogs with current Transform Data",
+      "Next": "Handle Transform Job Run Status"
+    },
+    "Handle Transform Job Run Status": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$.Payload",
+      "Parameters": {
+        "Payload.$": "$",
+        "FunctionName": "${lambda_handle_step_function_status_arn}"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "End": true
+    }
+  }
+}

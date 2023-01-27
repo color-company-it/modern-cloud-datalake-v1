@@ -1,5 +1,5 @@
 {
-  "Comment": "Extract Pipeline for dirk_test_dev_business_bank_config_jdbc_extract_extract",
+  "Comment": "Extract Pipeline for ${name}",
   "StartAt": "Extract Config Manager",
   "States": {
     "Extract Config Manager": {
@@ -24,7 +24,16 @@
         }
       ],
       "Comment": "Consume the event payload and construct the input argument for the Extract Jobs",
-      "Next": "Iterate Through Extract Tables"
+      "Next": "Iterate Through Extract Tables",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Comment": "Handle Lambda Config Errors",
+          "Next": "Handle Extract Job Run Status after Map"
+        }
+      ]
     },
     "Iterate Through Extract Tables": {
       "Type": "Map",
@@ -49,7 +58,7 @@
           },
           "Glue Start Extract Job Run": {
             "Type": "Task",
-            "Resource": "arn:aws:states:::glue:startJobRun",
+            "Resource": "arn:aws:states:::glue:startJobRun.sync",
             "Parameters": {
               "JobName": "${glue_job_name}",
               "NumberOfWorkers.$": "$.worker_no",
@@ -79,7 +88,16 @@
               }
             },
             "End": true,
-            "Comment": "Run extract for the provided table."
+            "Comment": "Run extract for the provided table.",
+            "Catch": [
+              {
+                "ErrorEquals": [
+                  "States.ALL"
+                ],
+                "Comment": "Catch All Glue Errors",
+                "Next": "Handle Extract Job Run Status in Map"
+              }
+            ]
           },
           "Handle Extract Job Run Status in Map": {
             "Type": "Task",
@@ -87,7 +105,7 @@
             "OutputPath": "$",
             "Parameters": {
               "Payload.$": "$",
-              "FunctionName": "${lambda_handle_step_function_status_arn}",
+              "FunctionName": "${lambda_handle_step_function_status_arn}"
             },
             "Retry": [
               {

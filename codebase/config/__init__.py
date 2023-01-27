@@ -74,6 +74,7 @@ def generate_transform_config(config) -> list:
             "source_type": extract["source_type"],
             "run_crawler": transform["run_crawler"],
             "db_name": extract["db_name"],
+            "db_engine": extract["db_engine"],
             "worker_no": int(default("worker_no")),  # needs to be int for sf payload
             "partition_key": default(
                 "partition_key"

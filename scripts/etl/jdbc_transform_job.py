@@ -81,7 +81,7 @@ if __name__ == "__main__":
         "--source_type", type=str, help="Data Source Type like JDBC or API"
     )
     parser.add_argument("--db_name", type=str, help="Database name")
-    parser.add_argument("--db_table", type=str, help="DB table")
+    parser.add_argument("--transform_table", type=str, help="DB table")
     parser.add_argument("--db_engine", type=str, help="Database engine")
     parser.add_argument("--record_key", type=str, help="DB Primary Key")
     parser.add_argument(
@@ -97,9 +97,9 @@ if __name__ == "__main__":
     _job_name = args.job_name
     _source_type = args.source_type
     _db_name = args.db_name
-    _db_table = args.extract_table
+    _transform_table = args.transform_table
     _db_engine = args.db_engine
-    _hudi_table = f"{_db_name}_{_db_table}".replace(".", "_").lower()
+    _hudi_table = f"{_db_name}_{_transform_table}".replace(".", "_").lower()
     _record_key = args.record_key
     _schema = json.loads(args.schema)
     _extract_s3_uri = args.extract_s3_uri

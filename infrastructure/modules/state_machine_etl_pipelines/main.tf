@@ -35,12 +35,28 @@ resource "aws_sfn_state_machine" "extract" {
       lambda_handle_step_function_status_arn = var.lambda_handle_step_function_status_arn
       lambda_role_arn                        = var.lambda_role_arn
       glue_job_name                          = var.glue_job_name
-      glue_crawler_name                      = var.glue_crawler_name
       glue_role_arn                          = var.glue_role_arn
-      source_topic_arn                       = aws_sns_topic.source_topic.arn
       states_role_arn                        = var.states_role_arn
     }
   )
   name     = "${local.job_name}_extract"
+  role_arn = var.states_role_arn
+}
+
+resource "aws_sfn_state_machine" "transform" {
+  count = local.bool_transform
+  definition = templatefile("${path.module}/transform_definition.tmpl",
+    {
+      name                                   = "${local.job_name}_transform"
+      lambda_transform_config_manager_arn    = var.lambda_transform_config_manager_arn
+      lambda_handle_step_function_status_arn = var.lambda_handle_step_function_status_arn
+      lambda_role_arn                        = var.lambda_role_arn
+      glue_job_name                          = var.glue_job_name
+      glue_crawler_name                      = var.glue_crawler_name
+      glue_role_arn                          = var.glue_role_arn
+      states_role_arn                        = var.states_role_arn
+    }
+  )
+  name     = "${local.job_name}_transform"
   role_arn = var.states_role_arn
 }

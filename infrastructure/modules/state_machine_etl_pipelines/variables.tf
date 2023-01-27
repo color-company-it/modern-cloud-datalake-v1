@@ -18,6 +18,11 @@ variable "lambda_extract_config_manager_arn" {
   description = "The ARN of the Lambda function that extracts the configuration for the extract step"
 }
 
+variable "lambda_transform_config_manager_arn" {
+  type        = string
+  description = "The ARN of the Lambda function that extracts the configuration for the transform step"
+}
+
 variable "lambda_handle_step_function_status_arn" {
   type        = string
   description = "The ARN of the Lambda function that handles the status of the step function"

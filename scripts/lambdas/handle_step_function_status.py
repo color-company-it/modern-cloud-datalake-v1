@@ -14,6 +14,24 @@ LOGGER = get_logger()
 
 
 def lambda_handler(event, context):
+    print(f"EVENT: {event}")
     _return = {"status_code": 200}
     LOGGER.info(f"Return: {_return}")
+
+    # Check if there was a failure in the event
+    if "Error" in event and "Cause" in event:
+        error, cause = event["Error"], json.loads(event["Cause"])
+        error_message = cause["ErrorMessage"]
+
+        if "JobName" in cause:
+            job_name = cause["JobName"]
+            print(
+                f"Error:`{error}` occurred during Glue Job Run for :`{job_name}`, with  {error_message}"
+            )
+
+    else:
+        if "JobName" in event:
+            job_name = event["JobName"]
+            print(f"Run Succeeded for Glue Job: {job_name}")
+
     return json.dumps(_return)

@@ -23,4 +23,5 @@ from their data and drive business growth.
 	- [2_codebase](./2_codebase.md)
 	- [3_jdbc_etl_job](./3_jdbc_etl_job.md)
 	- [4_orchestration](./4_orchestration.md)
+	- [5_user_set_up](./5_user_set_up.md)
 	- [FAQs](./FAQs.md)

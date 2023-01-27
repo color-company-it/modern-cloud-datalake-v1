@@ -41,6 +41,7 @@ resource "aws_lambda_function" "lambda_functions" {
 
   environment {
     variables = {
+      project_name             = var.project_name
       region_name              = var.region_name
       sdlc_stage               = var.sdlc_stage
       account_id               = data.aws_caller_identity.current.account_id

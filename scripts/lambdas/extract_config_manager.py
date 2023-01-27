@@ -15,6 +15,17 @@ EXTRACT_TRACKING_TABLE = os.getenv("extract_tracking_table")
 LOGGER = get_logger()
 
 
+def set_extract_item(extract_item: dict, source_name: str) -> dict:
+    """
+    Method to quickly update the extract item with the relevant dynamic information.
+    """
+    extract_item[
+        "extract_s3_uri"
+    ] = f"s3://{EXTRACT_S3_BUCKET}/{source_name}/{extract_item['db_name']}/{extract_item['extract_table'].replace('.', '/')}/"
+    extract_item["tracking_table_name"] = EXTRACT_TRACKING_TABLE
+    return extract_item
+
+
 def lambda_handler(event, context):
     """
     This function sends a payload to an AWS Step Function that triggers an extract job.
@@ -54,16 +65,22 @@ def lambda_handler(event, context):
     for extract_item in _extract_config:
         extract_table = extract_item.get("extract_table")
 
-        # only add to list if ready to be run
-        if extract_table in _extract_tables:
-            # populate additional data populated by terraform
-            extract_item[
-                "extract_s3_uri"
-            ] = f"s3://{EXTRACT_S3_BUCKET}/{extract_item['db_name']}/{extract_item['extract_table'].replace('.', '/')}/"
-            extract_item["tracking_table_name"] = EXTRACT_TRACKING_TABLE
+        # if _extract_tables is "*" then all tables can be run
+        if _extract_tables == "*":
+            extract_item = set_extract_item(
+                extract_item=extract_item, source_name=_source_name
+            )
             _tables_to_extract.append(extract_item)
+
+        # only add to list if ready to be run
         else:
-            _tables_not_to_extract.append(extract_table)
+            if extract_table in _extract_tables:
+                extract_item = set_extract_item(
+                    extract_item=extract_item, source_name=_source_name
+                )
+                _tables_to_extract.append(extract_item)
+            else:
+                _tables_not_to_extract.append(extract_table)
 
     LOGGER.info(
         f"The extract_table(s) {_tables_not_to_extract} will not be extracted in this run"

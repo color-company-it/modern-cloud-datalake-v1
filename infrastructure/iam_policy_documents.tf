@@ -14,6 +14,17 @@ data "aws_iam_policy_document" "custom_lambda_policy" {
   }
 
   statement {
+    sid    = "AllowSNSPublish"
+    effect = "Allow"
+    actions = [
+      "sns:Publish",
+    ]
+    resources = [
+      "*"
+    ]
+  }
+
+  statement {
     sid    = "ModifyDDBTrackingTable"
     effect = "Allow"
     actions = [

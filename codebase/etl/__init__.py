@@ -1,9 +1,10 @@
 import datetime
 import logging
 from decimal import Decimal
+from typing import List
 
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, current_timestamp, date_format
+from pyspark.sql.functions import col, current_timestamp, date_format, sha2, concat
 from pyspark.sql.types import *
 
 
@@ -156,13 +157,27 @@ def get_num_partitions(data_frame: DataFrame, rows_per_partition: int = 1000) ->
     return num_partitions
 
 
-def add_url_safe_current_time(data_frame: DataFrame) -> DataFrame:
+def add_url_safe_current_time(
+    data_frame: DataFrame, source_type: str = "jdbc", etl_stage: str = "extract"
+) -> [DataFrame, str]:
     """
     Adds a column to the given data frame with the current timestamp in a format safe for use in URIs.
     """
-    data_frame = data_frame.withColumn("jdbc_extract_time", current_timestamp())
+    column_name = f"{source_type}_{etl_stage}_time"
+    data_frame = data_frame.withColumn(column_name, current_timestamp())
     data_frame = data_frame.withColumn(
-        "jdbc_extract_time",
-        date_format(col("jdbc_extract_time"), "yyyy-MM-dd_hh-mm-ss"),
+        column_name,
+        date_format(col(column_name), "yyyy-MM-dd_hh-mm-ss"),
     )
-    return data_frame
+    return data_frame, column_name
+
+
+def add_hash_column(data_frame: DataFrame, columns_to_hash: List[str]) -> DataFrame:
+    """
+    Add a hash column to the DataFrame, containing the SHA-256 hash of the specified columns.
+    :param data_frame: DataFrame to add the hash column to.
+    :param columns_to_hash: List of column names to include in the hash.
+    :return: DataFrame with the new hash column.
+    """
+    hash_col = sha2(concat(*[col(c) for c in columns_to_hash]), 256).alias("hash")
+    return data_frame.withColumn("hash", hash_col)

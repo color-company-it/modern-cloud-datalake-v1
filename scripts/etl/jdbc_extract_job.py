@@ -10,11 +10,15 @@ extract on the next run, or reingest or rerun based on the success of the pipeli
 The job supports the following JDBC engines: postgres and mysql.
 """
 import argparse
+import datetime
+import sys
 
-from awsglue.context import GlueContext
-from awsglue.transforms import *
+if "glue" in sys.modules:
+    from awsglue.context import GlueContext
+    from awsglue.transforms import *
+
 from pyspark.context import SparkContext
-from pyspark.sql import DataFrame
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import col, max
 
 from codebase.aws.ddb import get_tracking_table_item, update_extract_tracking_table
@@ -25,6 +29,7 @@ from codebase.etl import (
     add_url_safe_current_time,
     get_spark_logger,
     MIN_VALUES,
+    add_hash_column,
 )
 from codebase.etl.extract import (
     determine_extract_plan,
@@ -34,6 +39,8 @@ from codebase.etl.extract import (
     get_pushdown_query,
     create_db_table_schema,
 )
+
+NOW = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
 
 def main():
@@ -124,7 +131,13 @@ def main():
             LOGGER.info(f"Repartitioning DataFrame with {num_partitions} partitions")
             data_frame = data_frame.repartition(num_partitions)
 
-        data_frame = add_url_safe_current_time(data_frame=data_frame)
+        # adding all relevant metadata
+        data_frame, job_partition_key = add_url_safe_current_time(
+            data_frame=data_frame, etl_stage="extract", source_type=_source_type
+        )
+        data_frame = add_hash_column(
+            data_frame=data_frame, columns_to_hash=data_frame.columns
+        )
 
         LOGGER.info("Printing Schema:")
         data_frame.printSchema()
@@ -134,13 +147,13 @@ def main():
                 f"Overwriting the directory before the extract write to: {_extract_s3_uri}"
             )
             data_frame.write.mode("overwrite").partitionBy(
-                _extract_s3_partitions
+                [job_partition_key] + _extract_s3_partitions
             ).parquet(_extract_s3_uri)
         else:
             LOGGER.info(f"Writing data to: {_extract_s3_uri}")
-            data_frame.write.mode("append").partitionBy(_extract_s3_partitions).parquet(
-                _extract_s3_uri
-            )
+            data_frame.write.mode("append").partitionBy(
+                [job_partition_key] + _extract_s3_partitions
+            ).parquet(_extract_s3_uri)
 
         # Update the hwm and lwm value for the next run, since we want to move to the next
         # hwm and lwm values, the hwm_value is turned off and lwm value is set to the max
@@ -188,6 +201,9 @@ if __name__ == "__main__":
     LOGGER = get_spark_logger()
     parser = argparse.ArgumentParser()
     parser.add_argument("--job_name", type=str, help="Glue Job Name")
+    parser.add_argument(
+        "--source_type", type=str, help="Data Source Type like JDBC or API"
+    )
     parser.add_argument("--db_engine", type=str, help="Database engine")
     parser.add_argument("--db_secret", type=str, help="AWS SecretsManager name")
     parser.add_argument("--db_host", type=str, help="Database host")
@@ -221,6 +237,7 @@ if __name__ == "__main__":
 
     args, _ = parser.parse_known_args()
     _job_name = args.job_name
+    _source_type = args.source_type
     _db_secret = get_db_secret(secret_name=args.db_secret)
     _db_engine = args.db_engine
     _db_user = _db_secret["db_user"]
@@ -252,8 +269,12 @@ if __name__ == "__main__":
     _reingest = bool(_reingest.lower() in ["true", "y", "1"])
 
     sc = SparkContext()
-    glueContext = GlueContext(sc)
-    SPARK = glueContext.spark_session
+    if "glue" in sys.modules:
+        glueContext = GlueContext(sc)
+        SPARK = glueContext.spark_session
+    else:
+        LOGGER.info("Glue libraries not found, continuing with the SparkContext")
+        SPARK = SparkSession.builder.getOrCreate()
 
     # make sure _hwm_column_type is supported
     if _hwm_column_type not in MIN_VALUES:

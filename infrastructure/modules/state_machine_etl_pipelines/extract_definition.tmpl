@@ -24,7 +24,16 @@
         }
       ],
       "Comment": "Consume the event payload and construct the input argument for the Extract Jobs",
-      "Next": "Iterate Through Extract Tables"
+      "Next": "Iterate Through Extract Tables",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Comment": "Handle Lambda Config Errors",
+          "Next": "Handle Extract Job Run Status after Map"
+        }
+      ]
     },
     "Iterate Through Extract Tables": {
       "Type": "Map",
@@ -44,17 +53,18 @@
                 "Comment": "Run Glue Extract Job"
               }
             ],
-            "Default": "Handle Extract Job Run Status",
+            "Default": "Handle Extract Job Run Status in Map",
             "Comment": "Choice for Glue, EMR, and ECS"
           },
           "Glue Start Extract Job Run": {
             "Type": "Task",
-            "Resource": "arn:aws:states:::glue:startJobRun",
+            "Resource": "arn:aws:states:::glue:startJobRun.sync",
             "Parameters": {
               "JobName": "${glue_job_name}",
               "NumberOfWorkers.$": "$.worker_no",
               "WorkerType.$": "$.worker_type",
               "Arguments": {
+                "--source_name.$": "$.source_name",
                 "--extract_table.$": "$.extract_table",
                 "--job_type.$": "$.job_type",
                 "--source_type.$": "$.source_type",
@@ -75,7 +85,9 @@
                 "--num_partitions.$": "$.num_partitions",
                 "--fetchsize.$": "$.fetchsize",
                 "--extract_s3_uri.$": "$.extract_s3_uri",
-                "--tracking_table_name.$": "$.tracking_table_name"
+                "--tracking_table_name.$": "$.tracking_table_name",
+                "--source_topic_arn": "${source_topic_arn}",
+                "--etl_type": "extract"
               }
             },
             "End": true,
@@ -83,14 +95,15 @@
             "Catch": [
               {
                 "ErrorEquals": [
-                  "Glue.AWSGlueException"
+                  "States.ALL"
                 ],
-                "Comment": "Catch Glue Errors",
-                "Next": "Handle Extract Job Run Status"
+                "Comment": "Catch All Glue Errors",
+                "Next": "Handle Extract Job Run Status in Map"
               }
-            ]
+            ],
+            "ResultPath": "$"
           },
-          "Handle Extract Job Run Status": {
+          "Handle Extract Job Run Status in Map": {
             "Type": "Task",
             "Resource": "arn:aws:states:::lambda:invoke",
             "OutputPath": "$",
@@ -111,23 +124,37 @@
                 "BackoffRate": 2
               }
             ],
-            "End": true,
-            "Comment": "Handles all Statuses of the Step Function"
+            "Comment": "Handles all Statuses of the Step Function",
+            "End": true
           }
         }
       },
       "InputPath": "$",
-      "Next": "Publish to Source Owner Topic"
+      "Next": "Handle Extract Job Run Status after Map"
     },
-    "Publish to Source Owner Topic": {
+    "Handle Extract Job Run Status after Map": {
       "Type": "Task",
-      "Resource": "arn:aws:states:::sns:publish",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "OutputPath": "$",
       "Parameters": {
-        "TopicArn": "${source_topic_arn}",
-        "Message.$": "$"
+        "Payload.$": "$",
+        "FunctionName": "${lambda_handle_step_function_status_arn}"
       },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
       "End": true,
-      "Comment": "Publish Job Run Status to the Specific Onwers"
+      "Comment": "Handles all Statuses of the Step Function"
     }
   }
 }

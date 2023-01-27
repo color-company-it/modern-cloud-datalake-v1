@@ -1,4 +1,4 @@
-source_name: "business_bank_config_jdbc_extract"
+source_name: "fake_business"
 source_owners:
   - dirkscgm@gmail.com
 extract:
@@ -34,21 +34,21 @@ extract:
       # fetchsize: Set as default above
       # reingest: Defined by the Step Function
       # tracking_table_name: Defined in the infrastructure
-    public.other:
-      partition_column: "AccountID"
-      lower_bound: "1"
-      upper_bound: "1000"
-      hwm_col_name: "AccountID"
-      hwm_column_type: "IntegerType"
-      lwm_value: "1"
-      hwm_value: "1000"
-      repartition_dataframe: "true"
-      extract_s3_partitions: "AccountType"
-      # extract_s3_uri: Defined by the Step Function
-      # num_partitions: Set as default above
-      # fetchsize: Set as default above
-      # reingest: Defined by the Step Function
-      # tracking_table_name: Defined in the infrastructure
+#    public.other:
+#      partition_column: "AccountID"
+#      lower_bound: "1"
+#      upper_bound: "1000"
+#      hwm_col_name: "AccountID"
+#      hwm_column_type: "IntegerType"
+#      lwm_value: "1"
+#      hwm_value: "1000"
+#      repartition_dataframe: "true"
+#      extract_s3_partitions: "AccountType"
+#      # extract_s3_uri: Defined by the Step Function
+#      # num_partitions: Set as default above
+#      # fetchsize: Set as default above
+#      # reingest: Defined by the Step Function
+#      # tracking_table_name: Defined in the infrastructure
 transform:
   job_type: glue # emr, ecs
   script_name: jdbc_transform_job.py

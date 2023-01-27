@@ -14,9 +14,11 @@ LOGGER = get_logger()
 
 
 def lambda_handler(event, context):
-    print(f"EVENT: {event}")
+    LOGGER.info(f"Event: {event}")
     _return = {"status_code": 200}
     LOGGER.info(f"Return: {_return}")
+
+    sns_message = None
 
     # Check if there was a failure in the event
     if "Error" in event and "Cause" in event:

@@ -59,10 +59,10 @@ def lambda_handler(event, context):
             # populate additional data populated by terraform
             transform_item[
                 "extract_s3_uri"
-            ] = f"s3://{EXTRACT_S3_BUCKET}/{transform_item['db_name']}/{transform_item['transform_table'].replace('.', '/')}/"
+            ] = f"s3://{EXTRACT_S3_BUCKET}/{_source_name}/{transform_item['db_name']}/{transform_item['transform_table'].replace('.', '/')}/"
             transform_item[
                 "transform_s3_uri"
-            ] = f"s3://{TRANSFORM_S3_BUCKET}/{transform_item['db_name']}/{transform_item['transform_table'].replace('.', '/')}/"
+            ] = f"s3://{TRANSFORM_S3_BUCKET}/{_source_name}/{transform_item['db_name']}/{transform_item['transform_table'].replace('.', '/')}/"
             transform_item["tracking_table_name"] = TRANSFORM_TRACKING_TABLE
             _tables_to_transform.append(transform_item)
         else:

@@ -43,26 +43,35 @@ def get_job_run_type(event: dict) -> str:
 
 def lambda_handler(event, context):
     # iterate through events from the step function map
-    for event in event:
-        LOGGER.info(f"Event: {event}")
+    for _event in event:
+        LOGGER.info(f"Event: {_event}")
+
+        # ToDo: Update handing for EMR and ECS
+        _job_run_type = get_job_run_type(event=_event)
 
         # Check if there was a failure in the event otherwise get the run information
-        if "Error" in event and "Cause" in event:
-            error, cause = event["Error"], json.loads(event["Cause"])
+        if "Error" in _event and "Cause" in _event:
+            error, cause = _event["Error"], json.loads(_event["Cause"])
             error_message = cause["ErrorMessage"]
 
-            if "JobName" in cause:
-                job_name = cause["JobName"]
-                print(
-                    f"Error:`{error}` occurred during Glue Job Run for :`{job_name}`, with  {error_message}"
+            if _job_run_type == "glue":
+                job_name = _event["JobName"]
+                arguments = _event["Arguments"]
+                source_topic_arn = arguments["--source_topic_arn"]
+                sns_subject = (
+                    f"Error:{error} occurred during Glue Job Run for :{job_name}'"
                 )
+                sns_message = f"""
+                               The error raised was:\n {error_message}
+                                """.strip()
+            else:
+                raise ValueError("Cloud not define SNS payload from event payload")
 
         else:
-            # ToDo: Update handing for EMR and ECS
-            _job_run_type = get_job_run_type(event=event)
             if _job_run_type == "glue":
-                job_name = event["JobName"]
-                arguments = event["Arguments"]
+                job_name = _event["JobName"]
+                arguments = _event["Arguments"]
+                source_topic_arn = arguments["--source_topic_arn"]
                 sns_subject = f"Run Succeeded for Glue Job: {job_name}"
                 sns_message = f"""
                 Glue Job Run Succeeded for {arguments['--source_type']} source {arguments['--extract_table']}
@@ -70,7 +79,7 @@ def lambda_handler(event, context):
             else:
                 raise ValueError("Cloud not define SNS payload from event payload")
 
-            LOGGER.info(f"sns_subject: {sns_subject}\nsns_message: {sns_message}")
-
-
-lambda_handler(event=s, context=None)
+        LOGGER.info(f"sns_subject: {sns_subject}\nsns_message: {sns_message}")
+        push_sns_message(
+            source_topic_arn=source_topic_arn, subject=sns_subject, message=sns_message
+        )

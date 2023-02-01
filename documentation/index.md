@@ -18,10 +18,10 @@ from their data and drive business growth.
 
 # Index
 
-1. .
-	- [1_configuration](./1_configuration.md)
-	- [2_codebase](./2_codebase.md)
-	- [3_jdbc_etl_job](./3_jdbc_etl_job.md)
-	- [4_orchestration](./4_orchestration.md)
-	- [5_user_set_up](./5_user_set_up.md)
-	- [FAQs](./FAQs.md)
+1. 1_UserDocumentation
+	- [1_configuration](./1_UserDocumentation/1_configuration.md)
+	- [2_codebase](./1_UserDocumentation/2_codebase.md)
+	- [3_jdbc_etl_job](./1_UserDocumentation/3_jdbc_etl_job.md)
+	- [4_orchestration](./1_UserDocumentation/4_orchestration.md)
+	- [5_user_set_up](./1_UserDocumentation/5_user_set_up.md)
+	- [FAQs](./1_UserDocumentation/FAQs.md)

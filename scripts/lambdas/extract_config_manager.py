@@ -3,7 +3,7 @@ import os
 
 from codebase import get_logger
 from codebase.aws.s3 import get_config_from_s3
-from codebase.config import generate_extract_config
+from codebase.config.extract import generate_extract_config
 
 # items provided as lambda envs
 REGION_NAME = os.getenv("region_name")
@@ -15,7 +15,7 @@ EXTRACT_TRACKING_TABLE = os.getenv("extract_tracking_table")
 LOGGER = get_logger()
 
 
-def set_extract_item(extract_item: dict, source_name: str) -> dict:
+def set_extract_item(extract_item: dict, source_name: str, event: dict) -> dict:
     """
     Method to quickly update the extract item with the relevant dynamic information.
     """
@@ -23,6 +23,9 @@ def set_extract_item(extract_item: dict, source_name: str) -> dict:
         "extract_s3_uri"
     ] = f"s3://{EXTRACT_S3_BUCKET}/{source_name}/{extract_item['db_name']}/{extract_item['extract_table'].replace('.', '/')}/"
     extract_item["tracking_table_name"] = EXTRACT_TRACKING_TABLE
+    extract_item[
+        "extract_payload"
+    ] = event  # used to define what the transform job is going to be
     return extract_item
 
 
@@ -68,7 +71,7 @@ def lambda_handler(event, context):
         # if _extract_tables is "*" then all tables can be run
         if _extract_tables == "*":
             extract_item = set_extract_item(
-                extract_item=extract_item, source_name=_source_name
+                extract_item=extract_item, source_name=_source_name, event=event
             )
             _tables_to_extract.append(extract_item)
 
@@ -76,7 +79,7 @@ def lambda_handler(event, context):
         else:
             if extract_table in _extract_tables:
                 extract_item = set_extract_item(
-                    extract_item=extract_item, source_name=_source_name
+                    extract_item=extract_item, source_name=_source_name, event=event
                 )
                 _tables_to_extract.append(extract_item)
             else:
